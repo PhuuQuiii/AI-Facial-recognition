@@ -111,8 +111,7 @@ def main():
 
 
                                 if best_class_probabilities > 0.8:
-                                    # Gửi thông báo đến giáo viên qua SocketIO
-                                    socketio.emit('response', {"name": best_name})
+                                    
 
                                     cv2.rectangle(frame, (bb[i][0], bb[i][1]), (bb[i][2], bb[i][3]), (0, 255, 0), 2)
                                     text_x = bb[i][0]
@@ -125,6 +124,9 @@ def main():
                                                 cv2.FONT_HERSHEY_COMPLEX_SMALL,
                                                 1, (255, 255, 255), thickness=1, lineType=2)
                                     person_detected[best_name] += 1
+
+                                    # Gửi thông báo đến giáo viên qua SocketIO
+                                    # socketio.emit('response', {"name": best_name})
                                 else:
                                     name = "Unknown"
 
