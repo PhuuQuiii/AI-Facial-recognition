@@ -3,7 +3,8 @@ Quí hướng dẫn:
 Tải các package: pip install -r requirements.txt
 
 run project: 
-Nhận diện qua cam: python src/face_rec_cam.py 
+Nhận diện qua cam: 
+python src/face_rec_cam.py 
 
 Nhận diện qua video: python src/face_rec.py --path video/vdPhuQui.mp4 
 
