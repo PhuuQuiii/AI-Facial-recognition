@@ -6,8 +6,6 @@ import tensorflow as tf
 tf.compat.v1.disable_eager_execution()
 
 from imutils.video import VideoStream
-
-
 import argparse
 import facenet
 import imutils
@@ -22,10 +20,23 @@ import collections
 from sklearn.svm import SVC
 from flask import Flask
 from flask_socketio import SocketIO
+from socketio import Client
+from dotenv import load_dotenv
 
-
+# Khởi tạo Flask app
+app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY')
+socketio_client = Client()
 
 def main():
+    # Kết nối đến server
+    try:
+        socketio_client.connect('http://127.0.0.1:5000')
+        print("Connected to server successfully.")
+    except Exception as e:
+        print(f"Connection error: {e}")
+        return
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', help='Path of the video you want to test on.', default=0)
     args = parser.parse_args()
@@ -45,13 +56,11 @@ def main():
     print("Custom Classifier, Successfully loaded")
 
     with tf.Graph().as_default():
-
-        # Cai dat GPU neu co
+        # Cài đặt GPU nếu có
         gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.6)
         sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options, log_device_placement=False))
 
         with sess.as_default():
-
             # Load the model
             print('Loading feature extraction model')
             facenet.load_model(FACENET_MODEL_PATH)
@@ -66,10 +75,9 @@ def main():
 
             people_detected = set()
             person_detected = collections.Counter()
+            cap = VideoStream(src=0).start()
 
-            cap  = VideoStream(src=0).start()
-
-            while (True):
+            while True:
                 frame = cap.read()
                 frame = imutils.resize(frame, width=600)
                 frame = cv2.flip(frame, 1)
@@ -103,19 +111,17 @@ def main():
 
                                 predictions = model.predict_proba(emb_array)
                                 best_class_indices = np.argmax(predictions, axis=1)
+                                best_class_probabilities = predictions[np.arange(len(best_class_indices)), best_class_indices]
                                 best_class_probabilities = predictions[
                                     np.arange(len(best_class_indices)), best_class_indices]
                                 best_name = class_names[best_class_indices[0]]
                                 print("Name: {}, Probability: {}".format(best_name, best_class_probabilities))
 
 
-
                                 if best_class_probabilities > 0.6:
-                                    
                                     cv2.rectangle(frame, (bb[i][0], bb[i][1]), (bb[i][2], bb[i][3]), (0, 255, 0), 2)
                                     text_x = bb[i][0]
                                     text_y = bb[i][3] + 20
-
                                     name = class_names[best_class_indices[0]]
                                     cv2.putText(frame, name, (text_x, text_y), cv2.FONT_HERSHEY_COMPLEX_SMALL,
                                                 1, (255, 255, 255), thickness=1, lineType=2)
@@ -125,10 +131,9 @@ def main():
                                     person_detected[best_name] += 1
 
                                     # Gửi thông báo đến giáo viên qua SocketIO
-                                    # socketio.emit('response', {"name": best_name})
+                                    socketio_client.emit('response', {"name": best_name})
                                 else:
                                     name = "Unknown"
-
                 except Exception as e:
                     print(f"Error processing frame: {e}")
 
@@ -139,5 +144,5 @@ def main():
             cap.release()
             cv2.destroyAllWindows()
 
-
-main()
+if __name__ == '__main__':
+    main()
