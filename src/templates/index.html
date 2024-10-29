@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trang chính</title>
+    <style>
+      /* Định dạng chung */
+      body {
+        font-family: "Roboto", sans-serif;
+        background-color: #f9f9fb;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        text-align: center;
+      }
+
+      h1 {
+        color: #333;
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+      }
+
+      /* Định dạng cho container chính */
+      div {
+        background-color: #fff;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        width: 100%;
+        text-align: center;
+      }
+
+      /* Định dạng cho nút */
+      button {
+        background-color: #3498db;
+        color: white;
+        padding: 15px 30px;
+        margin: 15px;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.3s, box-shadow 0.3s;
+        width: 100%;
+      }
+
+      button:hover {
+        background-color: #2980b9;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Định dạng cho tiêu đề phụ */
+      p {
+        font-size: 1rem;
+        color: #666;
+        margin-top: 10px;
+      }
+
+      /* Định dạng responsive cho màn hình nhỏ hơn */
+      @media (max-width: 768px) {
+        div {
+          padding: 30px;
+        }
+
+        h1 {
+          font-size: 2rem;
+        }
+
+        button {
+          padding: 12px 25px;
+          font-size: 0.9rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h1>Hệ thống điểm danh</h1>
+      <p>Vui lòng chọn loại tài khoản dùng để đăng nhập</p>
+      <button id="teacherLoginButton">Đăng nhập trang giáo viên</button>
+    </div>
+
+    <script>
+      document
+        .getElementById("teacherLoginButton")
+        .addEventListener("click", function () {
+          window.location.href = "/login_teacher";
+        });
+    </script>
+  </body>
+</html>

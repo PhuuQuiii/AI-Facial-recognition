@@ -1,0 +1,15 @@
+Dataset/FaceData/processed\Bui Van Du\z5840035135421_58ba6e3589fe8aac502f330f46cdd791.png 239 369 721 1032
+Dataset/FaceData/processed\Bui Van Du\z5840035120922_0532ace7ffc6009d2c56531ddc16c709.png 155 367 655 1059
+Dataset/FaceData/processed\Bui Van Du\z5840035102428_6cb02a50874c096d7e869f359e6e9f44.png 240 361 706 1016
+Dataset/FaceData/processed\Bui Van Du\z5840035122579_5e19bfa1940d85292819aeab30327d4f.png 215 368 690 1014
+Dataset/FaceData/processed\Bui Van Du\z5840035091760_ddbcd2b4c1966b406c280af504c43240.png 239 374 720 1023
+Dataset/FaceData/processed\Bui Van Du\z5840035111992_4296b2fc8aaa594fcd211e2010e620b6.png 232 359 682 950
+Dataset/FaceData/processed\Bui Van Du\z5840035105367_56e86e7059316e567e1245cb1ba5184b.png 216 408 717 1070
+Dataset/FaceData/processed\Nguyen Van Phu Qui\z5839930723230_688117e0f10ee4d293d10783fac15170.png 217 657 933 1605
+Dataset/FaceData/processed\Nguyen Van Phu Qui\z5839930708284_e11bf131837eba28a769df4ad62d83ca.png 277 586 1038 1642
+Dataset/FaceData/processed\Nguyen Van Phu Qui\z5839930698549_a96195143d9b670b1cf37a73eb06bc3f.png 276 408 1185 1720
+Dataset/FaceData/processed\Nguyen Van Phu Qui\z5839930778549_305cf7d0cc31167ab554b790e62a7edc.png 250 746 1069 1836
+Dataset/FaceData/processed\Nguyen Van Phu Qui\z5839930777855_24f31c113c641bb3364d5d97feb31b3c.png 287 655 1045 1723
+Dataset/FaceData/processed\Nguyen Van Phu Qui\z5839930710448_cc1f9fde9d11d9f66e31bfa6ca8b288c.png 257 536 1165 1769
+Dataset/FaceData/processed\Nguyen Van Phu Qui\z5839930698451_b7952a0f427a5b1b6aa3891eae6f1201.png 341 818 966 1679
+Dataset/FaceData/processed\Nguyen Van Phu Qui\z5839930775533_f586f5af910744a62899d3b3d2a33789.png 364 721 1057 1697

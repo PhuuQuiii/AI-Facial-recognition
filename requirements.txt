@@ -8,3 +8,8 @@ Pillow
 requests
 psutil
 imageio
+flask-cors 
+mysql-connector-python
+flask-socketio
+
+

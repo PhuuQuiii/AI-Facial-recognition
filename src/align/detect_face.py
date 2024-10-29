@@ -1,27 +1,5 @@
-""" Tensorflow implementation of the face detection / alignment algorithm found at
-https://github.com/kpzhang93/MTCNN_face_detection_alignment
-"""
-# MIT License
-# 
-# Copyright (c) 2016 David Sandberg
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+#    - Đây là file Python chứa mã nguồn để phát hiện khuôn mặt sử dụng mô hình MTCNN (Multi-task Cascaded Convolutional Networks)
+#    - Nó chứa các hàm và lớp cần thiết để phát hiện và xác định vị trí khuôn mặt trong hình ảnh.
 
 from __future__ import absolute_import
 from __future__ import division
@@ -34,7 +12,7 @@ import tensorflow as tf
 import cv2
 import os
 
-def layer(op):
+def layer(op): # Định nghĩa decorator layer để tạo các lớp mạng neural
     """Decorator for composable network layers."""
 
     def layer_decorated(self, *args, **kwargs):
@@ -58,7 +36,7 @@ def layer(op):
 
     return layer_decorated
 
-class Network(object):
+class Network(object): # Lớp cơ sở cho các mạng neural
 
     def __init__(self, inputs, trainable=True):
         # The input nodes for this network
@@ -128,6 +106,7 @@ class Network(object):
         """Verifies that the padding is one of the supported ones."""
         assert padding in ('SAME', 'VALID')
 
+    # Định nghĩa phương thức conv để thực hiện phép tính convolution trên dữ liệu đầu vào
     @layer
     def conv(self,
              inp,
@@ -163,6 +142,8 @@ class Network(object):
                 output = tf.nn.relu(output, name=scope.name)
             return output
 
+
+    # Định nghĩa phương thức prelu để thực hiện phép tính PReLU (Parametric ReLU) trên dữ liệu đầu vào
     @layer
     def prelu(self, inp, name):
         with tf.compat.v1.variable_scope(name):
@@ -171,8 +152,11 @@ class Network(object):
             output = tf.nn.relu(inp) + tf.multiply(alpha, -tf.nn.relu(-inp))
         return output
 
+    # Định nghĩa phương thức max_pool để thực hiện phép tính max pooling trên dữ liệu đầu vào
     @layer
     def max_pool(self, inp, k_h, k_w, s_h, s_w, name, padding='SAME'):
+        
+        # Các lớp PNet, RNet, ONet: Định nghĩa cấu trúc của ba mạng trong MTCNN
         self.validate_padding(padding)
         return tf.nn.max_pool(inp,
                               ksize=[1, k_h, k_w, 1],
@@ -180,6 +164,7 @@ class Network(object):
                               padding=padding,
                               name=name)
 
+    # Định nghĩa phương thức fc để thực hiện phép tính fully connected trên dữ liệu đầu vào
     @layer
     def fc(self, inp, num_out, name, relu=True):
         with tf.compat.v1.variable_scope(name):
@@ -205,6 +190,7 @@ class Network(object):
     compute softmax along the dimension of target
     the native softmax only supports batch_size x dimension
     """
+    # Định nghĩa phương thức softmax để thực hiện phép tính softmax trên dữ liệu đầu vào
     @layer
     def softmax(self, target, axis, name=None):
         max_axis = tf.reduce_max(target, axis, keepdims=True)
@@ -213,7 +199,9 @@ class Network(object):
         softmax = tf.compat.v1.div(target_exp, normalize, name)
         return softmax
     
-class PNet(Network):
+    
+
+class PNet(Network): # Định nghĩa lớp PNet kế thừa từ lớp Network
     def setup(self):
         (self.feed('data') #pylint: disable=no-value-for-parameter, no-member
              .conv(3, 3, 10, 1, 1, padding='VALID', relu=False, name='conv1')
@@ -226,10 +214,11 @@ class PNet(Network):
              .conv(1, 1, 2, 1, 1, relu=False, name='conv4-1')
              .softmax(3,name='prob1'))
 
+        # Định nghĩa các lớp trong mạng PNet
         (self.feed('PReLU3') #pylint: disable=no-value-for-parameter
              .conv(1, 1, 4, 1, 1, relu=False, name='conv4-2'))
         
-class RNet(Network):
+class RNet(Network): # Hàm create_mtcnn: Tạo và tải các mô hình MTCNN
     def setup(self):
         (self.feed('data') #pylint: disable=no-value-for-parameter, no-member
              .conv(3, 3, 28, 1, 1, padding='VALID', relu=False, name='conv1')
@@ -248,7 +237,7 @@ class RNet(Network):
         (self.feed('prelu4') #pylint: disable=no-value-for-parameter
              .fc(4, relu=False, name='conv5-2'))
 
-class ONet(Network):
+class ONet(Network): 
     def setup(self):
         (self.feed('data') #pylint: disable=no-value-for-parameter, no-member
              .conv(3, 3, 32, 1, 1, padding='VALID', relu=False, name='conv1')
@@ -272,7 +261,8 @@ class ONet(Network):
 
         (self.feed('prelu5') #pylint: disable=no-value-for-parameter
              .fc(10, relu=False, name='conv6-3'))
-
+        
+# Hàm create_mtcnn: Tạo và tải các mô hình MTCNN
 def create_mtcnn(sess, model_path):
     if not model_path:
         model_path,_ = os.path.split(os.path.realpath(__file__))
@@ -295,7 +285,7 @@ def create_mtcnn(sess, model_path):
     onet_fun = lambda img : sess.run(('onet/conv6-2/conv6-2:0', 'onet/conv6-3/conv6-3:0', 'onet/prob1:0'), feed_dict={'onet/input:0':img})
     return pnet_fun, rnet_fun, onet_fun
 
-def detect_face(img, minsize, pnet, rnet, onet, threshold, factor):
+def detect_face(img, minsize, pnet, rnet, onet, threshold, factor): # Hàm chính để phát hiện khuôn mặt trong ảnh
     """Detects faces in an image, and returns bounding boxes and points for them.
     img: input image
     minsize: minimum faces' size
@@ -531,6 +521,8 @@ def bulk_detect_face(images, detection_window_size_ratio, pnet, rnet, onet, thre
     # second stage - refinement of face candidates with rnet
     # # # # # # # # # # # # #
 
+
+# Các hàm hỗ trợ như bbreg, generateBoundingBox, nms, pad, rerec, imresample: Thực hiện các thao tác xử lý hộp giới hạn và ảnh
     bulk_rnet_input = np.empty((0, 24, 24, 3))
     for index, image_obj in enumerate(images_with_boxes):
         if 'rnet_input' in image_obj:

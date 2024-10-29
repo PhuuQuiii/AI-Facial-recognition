@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": "../.git"
+		},
+		{
+			"path": "../Dataset"
+		},
+		{
+			"path": "../Models"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../test"
+		},
+		{
+			"path": "../video"
+		}
+	]
+}

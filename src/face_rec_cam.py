@@ -20,6 +20,9 @@ import numpy as np
 import cv2
 import collections
 from sklearn.svm import SVC
+from flask import Flask
+from flask_socketio import SocketIO
+
 
 
 def main():
@@ -108,6 +111,9 @@ def main():
 
 
                                 if best_class_probabilities > 0.8:
+                                    # Gửi thông báo đến giáo viên qua SocketIO
+                                    socketio.emit('response', {"name": best_name})
+
                                     cv2.rectangle(frame, (bb[i][0], bb[i][1]), (bb[i][2], bb[i][3]), (0, 255, 0), 2)
                                     text_x = bb[i][0]
                                     text_y = bb[i][3] + 20
@@ -122,8 +128,8 @@ def main():
                                 else:
                                     name = "Unknown"
 
-                except:
-                    pass
+                except Exception as e:
+                    print(f"Error processing frame: {e}")
 
                 cv2.imshow('Face Recognition', frame)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
