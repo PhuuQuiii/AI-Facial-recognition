@@ -11,5 +11,7 @@ imageio
 flask-cors 
 mysql-connector-python
 flask-socketio
+python-dotenv
+
 
 

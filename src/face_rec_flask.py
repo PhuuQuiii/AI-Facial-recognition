@@ -7,6 +7,7 @@ import tensorflow as tf
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 from dotenv import load_dotenv
+load_dotenv() 
 import os
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY') # Thay đổi secret key cho bảo mật
@@ -27,7 +28,6 @@ facenet.load_model('../Models/20180402-114759.pb')
 @app.route('/')
 def index():
     return render_template('index.html')
-
 @app.route('/login_teacher', methods=['GET', 'POST'])
 def login_teacher():
     if request.method == 'POST':
@@ -35,18 +35,37 @@ def login_teacher():
         teacher_id = data['teacherId']
         password = data['password']
 
+        # Kết nối đến cơ sở dữ liệu
         connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM teachers WHERE teacher_id = %s AND password = %s", (teacher_id, password))
+
+        # Truy vấn thông tin giáo viên
+        cursor.execute("SELECT * FROM Teacher WHERE MSGV = %s", (teacher_id,))
         teacher = cursor.fetchone()
 
         if teacher:
-            session['teacher_id'] = teacher_id
-            session['teacher_name'] = teacher[3]  # Tên giáo viên
-            session['class'] = teacher[4]  # Mã lớp
-            return jsonify({"success": True, "name": teacher[3], "class": teacher[4]})
+            # Kiểm tra mật khẩu
+            if teacher[2] == password:  # So sánh với trường password
+                session['teacher_id'] = teacher[0]  # MSGV
+                session['teacher_name'] = teacher[1]  # Tên giáo viên
+
+                # Lấy thông tin lớp mà giáo viên phụ trách
+                cursor.execute("SELECT id_class, name FROM Class WHERE teacher_id = %s", (teacher_id,))
+                class_info = cursor.fetchone()
+
+                if class_info:
+                    session['class'] = class_info[0]  # Mã lớp
+                    session['class_name'] = class_info[1]  # Tên lớp
+                    return jsonify({"success": True, "name": teacher[1], "class": class_info[1]})  # Trả về tên lớp
+
+                # Nếu không có lớp nào, không cần thiết thiết lập session['class']
+                return jsonify({"success": True, "name": teacher[1], "class": None})
+
         return jsonify({"success": False, "message": "Mã số giáo viên hoặc mật khẩu không đúng."})
-    return render_template('login_teacher.html')  # Trả về trang đăng nhập nếu là GET
+
+    return render_template('login_teacher.html')
+
+
 
 # Route cho trang dashboard giáo viên
 @app.route('/teacher_dashboard')
