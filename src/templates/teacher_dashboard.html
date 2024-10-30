@@ -55,18 +55,22 @@
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
         const socket = io();
-
+        const notifications = document.getElementById('attendanceNotifications');
+        const attendedStudents = new Set(); 
+    
         socket.on('response', function(data) {
-            const notifications = document.getElementById('attendanceNotifications');
             if (data.name) {
-                notifications.innerHTML += `<p>Đã điểm danh: ${data.name}</p>`;
+                if (!attendedStudents.has(data.name)) {
+                    attendedStudents.add(data.name); 
+                    notifications.innerHTML += `<p>Đã điểm danh: ${data.name}</p>`;
+                }
             } else if (data.error) {
                 notifications.innerHTML += `<p>${data.error}</p>`;
             }
         });
-
+    
         const teacherInfo = JSON.parse(sessionStorage.getItem("teacherInfo"));
-
+    
         if (teacherInfo) {
             document.getElementById("teacherName").innerText = teacherInfo.name;
             document.getElementById("className").innerText = teacherInfo.class;

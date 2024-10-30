@@ -19,6 +19,7 @@ from sklearn.svm import SVC
 import mysql.connector
 import json
 from flask import Flask, render_template
+from tensorflow.io import gfile
 
 
 
@@ -112,7 +113,7 @@ def main():
                             text_y = bb[i][3] + 20
 
                             # Neu ty le nhan dang > 0.5 thi hien thi ten
-                            if best_class_probabilities > 0.5:
+                            if best_class_probabilities > 0.8:
                                 name = best_name
                                 print(f"Recognized: {name} with probability: {best_class_probabilities[0]}")
                                 
