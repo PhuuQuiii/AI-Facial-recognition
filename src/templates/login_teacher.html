@@ -121,7 +121,7 @@
               if (data.success) {
                 sessionStorage.setItem(
                   "teacherInfo",
-                  JSON.stringify({ name: data.name, class: data.class })
+                  JSON.stringify({teacher_id: teacherId, name: data.name, class: data.class })
                 );
                 window.location.href = "/teacher_dashboard"; // Đảm bảo đường dẫn đúng
               } else {

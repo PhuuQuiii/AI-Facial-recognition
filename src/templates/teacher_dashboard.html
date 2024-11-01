@@ -3,49 +3,138 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Trang Giáo Viên</title>
+    <title>Teacher Dashboard</title>
     <style>
       body {
         font-family: Arial, sans-serif;
-        background-color: #f4f4f4;
+        display: flex;
+        flex-direction: column;
         margin: 0;
-        padding: 20px;
-        color: #333;
+        background-color: #f4f4f4;
       }
 
       header {
+        background-color: #2c3e50;
+        color: white;
+        padding: 10px;
         text-align: center;
-        margin-bottom: 20px;
       }
 
-      h1 {
-        font-size: 2.5em;
-        color: #2c3e50;
+      .container {
+        display: flex;
+        flex-grow: 1;
+        height: calc(100vh - 100px);
       }
 
-      #attendanceNotifications {
+      .sidebar {
+        width: 250px;
+        background-color: #e0e0e0;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sidebar h3 {
+        font-size: 18px;
+        margin-bottom: 10px;
+      }
+
+      .class-item {
+        padding: 8px;
+        margin-bottom: 5px;
+        cursor: pointer;
         background-color: #fff;
         border-radius: 5px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .class-item:hover {
+        background-color: #d4d4d4;
+      }
+
+      .content {
+        flex-grow: 1;
         padding: 20px;
-        margin-top: 20px;
+        background-color: #fff;
+        overflow-y: auto;
+      }
+
+      .content h3 {
+        margin-top: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      table,
+      th,
+      td {
+        border: 1px solid #ddd;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #2c3e50;
+        color: white;
       }
 
       footer {
         text-align: center;
-        margin-top: 20px;
-        font-size: 0.9em;
-        color: #7f8c8d;
+        padding: 10px;
+        background-color: #2c3e50;
+        color: white;
+      }
+
+      .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #4caf50;
+        color: white;
+        padding: 15px;
+        border-radius: 5px;
+        z-index: 1000;
+        transition: opacity 0.5s ease;
       }
     </style>
   </head>
   <body>
     <header>
-      <h1 id="teacherName"></h1>
+      <h1 id="teacherName">Tên Giáo Viên</h1>
       <h2>Lớp: <span id="className"></span></h2>
     </header>
-    <div id="attendanceNotifications">
-      <!-- Thông báo điểm danh sẽ được hiển thị ở đây -->
+
+    <div class="container">
+      <div class="sidebar" id="classList">
+        <h3>Danh sách lớp</h3>
+        <!-- Class list goes here -->
+      </div>
+
+      <div class="content" id="studentList">
+        <h3>Danh sách sinh viên</h3>
+        <table id="studentTable">
+          <thead>
+            <tr>
+              <th>MSSV</th>
+              <th>Tên</th>
+              <th>Ngày</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Student list goes here -->
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <footer>
@@ -55,29 +144,153 @@
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
       const socket = io();
-      const notifications = document.getElementById("attendanceNotifications");
-      const attendedStudents = new Set();
+      const teacherInfo = JSON.parse(sessionStorage.getItem("teacherInfo"));
+      console.log("Teacher Info:", teacherInfo); // Kiểm tra thông tin giáo viên
+
+      if (teacherInfo && teacherInfo.teacher_id) {
+        document.getElementById("teacherName").innerText = teacherInfo.name;
+        document.getElementById("className").innerText = "";
+        loadClasses(teacherInfo.teacher_id);
+      } else {
+        console.error(
+          "Teacher ID is undefined or teacherInfo is not available."
+        );
+      }
+
+      function loadClasses(teacherId) {
+        fetch(`/get_classes?teacher_id=${teacherId}`)
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Classes data:", data);
+            const classList = document.getElementById("classList");
+            classList.innerHTML = "";
+            data.classes.forEach((classItem) => {
+              const div = document.createElement("div");
+              div.className = "class-item";
+              div.innerText = `${classItem.id_class} - ${classItem.name}`;
+              div.onclick = () => {
+                loadStudents(classItem.id_class);
+                document.getElementById("className").innerText = classItem.name; // Cập nhật tên lớp trên header
+              };
+              classList.appendChild(div);
+            });
+          });
+      }
+
+      function loadStudents(classId) {
+        fetch(`/get_students?class_id=${classId}`)
+          .then((response) => response.json())
+          .then((data) => {
+            const studentTableBody = document
+              .getElementById("studentTable")
+              .getElementsByTagName("tbody")[0];
+            studentTableBody.innerHTML = ""; // Clear previous data
+            data.students.forEach((student) => {
+              const row = studentTableBody.insertRow();
+              row.insertCell(0).innerText = student.MSSV;
+              row.insertCell(1).innerText = student.name;
+              row.insertCell(2).innerText = student.date;
+
+              // Thêm dropdown cho trạng thái
+              const statusCell = row.insertCell(3);
+              const select = document.createElement("select");
+              const presentOption = document.createElement("option");
+              presentOption.value = "Present";
+              presentOption.innerText = "Present";
+              const absentOption = document.createElement("option");
+              absentOption.value = "Absent";
+              absentOption.innerText = "Absent";
+              select.appendChild(presentOption);
+              select.appendChild(absentOption);
+              select.value = student.status; // Đặt giá trị hiện tại
+              statusCell.appendChild(select);
+
+              // Thêm nút cập nhật
+              const actionCell = row.insertCell(4);
+              const updateButton = document.createElement("button");
+              updateButton.innerText = "Cập nhật";
+              updateButton.onclick = () => {
+                const newStatus = select.value;
+                updateAttendance(student.MSSV, newStatus, student.class_id);
+              };
+              actionCell.appendChild(updateButton);
+            });
+          });
+      }
+
+      function updateAttendance(mssv, status, classId) {
+        const date = new Date().toISOString().split("T")[0];
+
+        // Kiểm tra xem có bản ghi nào đã tồn tại không
+        fetch(`/check_attendance?student_id=${mssv}&date=${date}`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.exists) {
+              // Nếu bản ghi tồn tại, xóa nó trước khi thêm bản ghi mới
+              fetch("/delete_attendance", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  MSSV: mssv,
+                  date: date,
+                }),
+              })
+              .then((response) => response.json())
+              .then((deleteData) => {
+                if (deleteData.success) {
+                  console.log("Old attendance record deleted successfully.");
+                  addNewAttendance(mssv, status, classId, date);
+                } else {
+                  console.error("Error deleting old attendance record.");
+                }
+              });
+            } else {
+              // Nếu không có bản ghi nào, thêm mới
+              addNewAttendance(mssv, status, classId, date);
+            }
+          });
+      }
+
+      function addNewAttendance(mssv, status, classId, date) {
+        fetch("/update_attendance", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            MSSV: mssv,
+            date: date,
+            status: status,
+            class_id: classId,
+          }),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            console.log("Attendance updated successfully");
+          } else {
+            console.error("Error updating attendance");
+          }
+        });
+      }
 
       socket.on("response", function (data) {
-        if (data.MSSV) {
-          if (!attendedStudents.has(data.MSSV)) {
-            attendedStudents.add(data.MSSV);
-            notifications.innerHTML += `<p>Đã điểm danh: ${data.name} (MSSV: ${data.MSSV})</p>`;
-          }
-        } else if (data.error) {
-          notifications.innerHTML += `<p>${data.error}</p>`;
+        if (data.message) {
+          showNotification(data.message);
         }
       });
 
-      const teacherInfo = JSON.parse(sessionStorage.getItem("teacherInfo"));
+      function showNotification(message) {
+        const notification = document.createElement("div");
+        notification.className = "notification";
+        notification.innerText = message;
+        document.body.appendChild(notification);
 
-      if (teacherInfo) {
-        document.getElementById("teacherName").innerText = teacherInfo.name;
-        document.getElementById("className").innerText = teacherInfo.class;
-      } else {
-        document.getElementById("teacherName").innerText =
-          "Giáo viên chưa đăng nhập";
-        document.getElementById("className").innerText = "Chưa xác định lớp";
+        setTimeout(() => {
+          notification.remove();
+        }, 5000); // Thời gian hiển thị 5 giây
       }
     </script>
   </body>

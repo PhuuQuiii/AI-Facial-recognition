@@ -9,6 +9,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 load_dotenv() 
 import os
+import datetime
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY') # Thay đổi secret key cho bảo mật
 CORS(app)  # Để cho phép tất cả các nguồn kết nối
@@ -81,12 +82,72 @@ def handle_disconnect():
 
 @socketio.on('response')
 def handle_response(data):
-    # Kiểm tra xem dữ liệu có chứa MSSV không
     if 'MSSV' in data:
         student_info = get_student_info(data['MSSV'])
-        emit('response', student_info, broadcast=True)
+        if student_info:
+            # Lấy class_id từ cơ sở dữ liệu
+            class_id = get_class_id_by_student_id(student_info["MSSV"])
+            if class_id:
+                # Cập nhật điểm danh
+                date = str(datetime.date.today())  # Lấy ngày hiện tại
+                update_attendance(student_info["MSSV"], class_id, date, "Present")  # Gọi hàm với các tham số cần thiết
+                
+                emit('response', {
+                    "MSSV": student_info["MSSV"],
+                    "name": student_info["name"],
+                    "message": f"Sinh viên {student_info['name']} (MSSV: {student_info['MSSV']}) đã điểm danh."
+                }, broadcast=True)
+            else:
+                emit('response', {"error": "Class ID not found"}, broadcast=True)
+        else:
+            emit('response', {"error": "Student not found"}, broadcast=True)
     else:
         emit('response', {"error": "MSSV không được cung cấp"}, broadcast=True)
+
+def get_class_id_by_student_id(student_id): # lấy class_id từ cơ sở dữ liệu
+    connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT sc.class_id 
+        FROM Student_Class sc 
+        WHERE sc.student_id = %s
+    """, (student_id,))
+    class_id = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    
+    if class_id:
+        return class_id[0]  # Trả về class_id
+    return None  # Nếu không tìm thấy
+
+@app.route('/get_classes')
+def get_classes():
+    teacher_id = request.args.get('teacher_id')
+    
+    try:
+        connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+    cursor = connection.cursor()
+    cursor.execute("SELECT id_class, name FROM Class WHERE teacher_id = %s", (teacher_id,))
+    classes = cursor.fetchall()
+    print("Classes fetched:", classes)
+    return jsonify({"classes": [{"id_class": cls[0], "name": cls[1]} for cls in classes]})
+
+@app.route('/get_students')
+def get_students():
+    class_id = request.args.get('class_id')
+    connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT s.MSSV, s.name, a.date, a.status 
+        FROM Student s
+        JOIN Student_Class sc ON s.MSSV = sc.student_id
+        JOIN Attendance a ON s.MSSV = a.student_id
+        WHERE sc.class_id = %s
+    """, (class_id,))
+    students = cursor.fetchall()
+    return jsonify({"students": [{"MSSV": student[0], "name": student[1], "date": student[2], "status": student[3]} for student in students]})
 
 def get_student_info(student_id):
     connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
@@ -100,11 +161,70 @@ def get_student_info(student_id):
         }
     return {"error": "Student not found"}
 
+@app.route('/update_attendance', methods=['POST'])
+def update_attendance(mssv, class_id, date, status):
+    connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
+    cursor = connection.cursor()
+    
+    # Xóa bản ghi cũ nếu tồn tại
+    cursor.execute("""
+        DELETE FROM Attendance 
+        WHERE student_id = %s AND date = %s
+    """, (mssv, date))
+
+    # Thêm bản ghi mới
+    cursor.execute("""
+        INSERT INTO Attendance (student_id, class_id, date, status) 
+        VALUES (%s, %s, %s, %s) 
+        ON DUPLICATE KEY UPDATE status=VALUES(status), date=VALUES(date)
+    """, (mssv, class_id, date, status))
+
+    connection.commit()
+    cursor.close()
+    connection.close()
+    
+    return jsonify({"success": True})
 
 @app.before_request
 def before_request_func():
     print("Received request:", request.url)
     print("Request headers:", request.headers)
+
+@app.route('/check_attendance')
+def check_attendance():
+    student_id = request.args.get('student_id')
+    date = request.args.get('date')
+
+    connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT COUNT(*) 
+        FROM Attendance 
+        WHERE student_id = %s AND date = %s
+    """, (student_id, date))
+    count = cursor.fetchone()[0]
+    cursor.close()
+    connection.close()
+
+    return jsonify({"exists": count > 0})
+
+@app.route('/delete_attendance', methods=['POST'])
+def delete_attendance():
+    data = request.get_json()
+    mssv = data['MSSV']
+    date = data['date']
+
+    connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
+    cursor = connection.cursor()
+    cursor.execute("""
+        DELETE FROM Attendance 
+        WHERE student_id = %s AND date = %s
+    """, (mssv, date))
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+    return jsonify({"success": True})
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
