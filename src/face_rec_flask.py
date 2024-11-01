@@ -58,7 +58,6 @@ def login_teacher():
                     session['class_name'] = class_info[1]  # Tên lớp
                     return jsonify({"success": True, "name": teacher[1], "class": class_info[1]})  # Trả về tên lớp
 
-                # Nếu không có lớp nào, không cần thiết thiết lập session['class']
                 return jsonify({"success": True, "name": teacher[1], "class": None})
 
         return jsonify({"success": False, "message": "Mã số giáo viên hoặc mật khẩu không đúng."})
@@ -82,8 +81,25 @@ def handle_disconnect():
 
 @socketio.on('response')
 def handle_response(data):
-    # Xử lý thông báo từ face_rec_cam.py
-    emit('response', data, broadcast=True)
+    # Kiểm tra xem dữ liệu có chứa MSSV không
+    if 'MSSV' in data:
+        student_info = get_student_info(data['MSSV'])
+        emit('response', student_info, broadcast=True)
+    else:
+        emit('response', {"error": "MSSV không được cung cấp"}, broadcast=True)
+
+def get_student_info(student_id):
+    connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
+    cursor = connection.cursor()
+    cursor.execute("SELECT MSSV, name FROM Student WHERE MSSV = %s", (student_id,))
+    student = cursor.fetchone()
+    if student:
+        return {
+            "MSSV": student[0],
+            "name": student[1],
+        }
+    return {"error": "Student not found"}
+
 
 @app.before_request
 def before_request_func():

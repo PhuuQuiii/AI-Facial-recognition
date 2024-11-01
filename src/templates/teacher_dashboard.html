@@ -1,83 +1,84 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trang Giáo Viên</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+      }
 
-        header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+      header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
 
-        h1 {
-            font-size: 2.5em;
-            color: #2c3e50;
-        }
+      h1 {
+        font-size: 2.5em;
+        color: #2c3e50;
+      }
 
-        #attendanceNotifications {
-            background-color: #fff;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-top: 20px;
-        }
+      #attendanceNotifications {
+        background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-top: 20px;
+      }
 
-        footer {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 0.9em;
-            color: #7f8c8d;
-        }
+      footer {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 0.9em;
+        color: #7f8c8d;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <header>
-        <h1 id="teacherName"></h1>
-        <h2>Lớp: <span id="className"></span></h2>
+      <h1 id="teacherName"></h1>
+      <h2>Lớp: <span id="className"></span></h2>
     </header>
     <div id="attendanceNotifications">
-        <!-- Thông báo điểm danh sẽ được hiển thị ở đây -->
+      <!-- Thông báo điểm danh sẽ được hiển thị ở đây -->
     </div>
 
     <footer>
-        <p>&copy; 2024 Hệ Thống Điểm Danh</p>
+      <p>&copy; 2024 Hệ Thống Điểm Danh</p>
     </footer>
 
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
-        const socket = io();
-        const notifications = document.getElementById('attendanceNotifications');
-        const attendedStudents = new Set(); 
-    
-        socket.on('response', function(data) {
-            if (data.name) {
-                if (!attendedStudents.has(data.name)) {
-                    attendedStudents.add(data.name); 
-                    notifications.innerHTML += `<p>Đã điểm danh: ${data.name}</p>`;
-                }
-            } else if (data.error) {
-                notifications.innerHTML += `<p>${data.error}</p>`;
-            }
-        });
-    
-        const teacherInfo = JSON.parse(sessionStorage.getItem("teacherInfo"));
-    
-        if (teacherInfo) {
-            document.getElementById("teacherName").innerText = teacherInfo.name;
-            document.getElementById("className").innerText = teacherInfo.class;
-        } else {
-            document.getElementById("teacherName").innerText = "Giáo viên chưa đăng nhập";
-            document.getElementById("className").innerText = "Chưa xác định lớp";
+      const socket = io();
+      const notifications = document.getElementById("attendanceNotifications");
+      const attendedStudents = new Set();
+
+      socket.on("response", function (data) {
+        if (data.MSSV) {
+          if (!attendedStudents.has(data.MSSV)) {
+            attendedStudents.add(data.MSSV);
+            notifications.innerHTML += `<p>Đã điểm danh: ${data.name} (MSSV: ${data.MSSV})</p>`;
+          }
+        } else if (data.error) {
+          notifications.innerHTML += `<p>${data.error}</p>`;
         }
+      });
+
+      const teacherInfo = JSON.parse(sessionStorage.getItem("teacherInfo"));
+
+      if (teacherInfo) {
+        document.getElementById("teacherName").innerText = teacherInfo.name;
+        document.getElementById("className").innerText = teacherInfo.class;
+      } else {
+        document.getElementById("teacherName").innerText =
+          "Giáo viên chưa đăng nhập";
+        document.getElementById("className").innerText = "Chưa xác định lớp";
+      }
     </script>
-</body>
+  </body>
 </html>

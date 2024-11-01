@@ -118,7 +118,7 @@ def main():
                                 print("Name: {}, Probability: {}".format(best_name, best_class_probabilities))
 
 
-                                if best_class_probabilities > 0.6:
+                                if best_class_probabilities > 0.7:
                                     cv2.rectangle(frame, (bb[i][0], bb[i][1]), (bb[i][2], bb[i][3]), (0, 255, 0), 2)
                                     text_x = bb[i][0]
                                     text_y = bb[i][3] + 20
@@ -131,7 +131,7 @@ def main():
                                     person_detected[best_name] += 1
 
                                     # Gửi thông báo đến giáo viên qua SocketIO
-                                    socketio_client.emit('response', {"name": best_name})
+                                    socketio_client.emit('response', {"MSSV": best_name})
                                 else:
                                     name = "Unknown"
                 except Exception as e:
