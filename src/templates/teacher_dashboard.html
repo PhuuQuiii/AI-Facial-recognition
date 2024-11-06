@@ -1,242 +1,161 @@
 <!DOCTYPE html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Teacher Dashboard</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        display: flex;
-        flex-direction: column;
-        margin: 0;
-        background-color: #f4f4f4;
-      }
 
-      header {
-        background-color: #2c3e50;
-        color: white;
-        padding: 10px;
-        text-align: center;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="../stactic/css/styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teacher Dashboard</title>
+</head>
 
-      .container {
-        display: flex;
-        flex-grow: 1;
-        height: calc(100vh - 100px);
-      }
+<body>
+  <header>
+    <h1 id="teacherName">Tên Giáo Viên</h1>
+    <h2>Lớp: <span id="className">Lớp hiện tại</span></h2>
+  </header>
 
-      .sidebar {
-        width: 250px;
-        background-color: #e0e0e0;
-        padding: 15px;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .sidebar h3 {
-        font-size: 18px;
-        margin-bottom: 10px;
-      }
-
-      .class-item {
-        padding: 8px;
-        margin-bottom: 5px;
-        cursor: pointer;
-        background-color: #fff;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        text-align: center;
-      }
-
-      .class-item:hover {
-        background-color: #d4d4d4;
-      }
-
-      .content {
-        flex-grow: 1;
-        padding: 20px;
-        background-color: #fff;
-        overflow-y: auto;
-      }
-
-      .content h3 {
-        margin-top: 0;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      table,
-      th,
-      td {
-        border: 1px solid #ddd;
-      }
-
-      th,
-      td {
-        padding: 10px;
-        text-align: left;
-      }
-
-      th {
-        background-color: #2c3e50;
-        color: white;
-      }
-
-      footer {
-        text-align: center;
-        padding: 10px;
-        background-color: #2c3e50;
-        color: white;
-      }
-
-      .notification {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background-color: #4caf50;
-        color: white;
-        padding: 15px;
-        border-radius: 5px;
-        z-index: 1000;
-        transition: opacity 0.5s ease;
-      }
-    </style>
-  </head>
-  <body>
-    <header>
-      <h1 id="teacherName">Tên Giáo Viên</h1>
-      <h2>Lớp: <span id="className"></span></h2>
-    </header>
-
-    <div class="container">
-      <div class="sidebar" id="classList">
-        <h3>Danh sách lớp</h3>
-        <!-- Class list goes here -->
-      </div>
-
-      <div class="content" id="studentList">
-        <h3>Danh sách sinh viên</h3>
-        <table id="studentTable">
-          <thead>
-            <tr>
-              <th>MSSV</th>
-              <th>Tên</th>
-              <th>Ngày</th>
-              <th>Trạng thái</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Student list goes here -->
-          </tbody>
-        </table>
-      </div>
+  <div class="container">
+    <div class="sidebar">
+      <h3>Danh sách lớp</h3>
+      <ul>
+        <li>
+          <div class="dropdown">
+            <button style="width:250px;" class="dropdown-btn">Chọn Lớp</button>
+            <div class="dropdown-content">
+              <a href="class.html">ID Class1 - Tên Class1</a>
+              <a href="class.html">ID Class2 - Tên Class2</a>
+              <a href="class.html">ID Class3 - Tên Class3</a>
+              <a href="class.html">ID Class4 - Tên Class4</a>
+            </div>
+          </div>
+        </li>
+        <li><a href="#">Đăng xuất</a></li>
+      </ul>
     </div>
 
-    <footer>
-      <p>&copy; 2024 Hệ Thống Điểm Danh</p>
-    </footer>
+    <div style="padding:0px; " class="content" id="studentList">
+      <div style="height:50px;">
+        <ul style="list-style-type: none;background-color:#818487; padding:10px;">
+          <li>
+            <div class="dropdown">
+              <button style="width:90px" class="dropdown-btn">Tuần</button>
+              <div class="dropdown-content">
+                <a href="#">Tuần 1</a>
+                <a href="#">Tuần 2</a>
+                <a href="#">Tuần 3</a>
+                <a href="#">Tuần 4</a>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div>
 
-    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-    <script>
-      const socket = io();
-      const teacherInfo = JSON.parse(sessionStorage.getItem("teacherInfo"));
-      console.log("Teacher Info:", teacherInfo); // Kiểm tra thông tin giáo viên
+      </div>
+    </div>
+  </div>
 
-      if (teacherInfo && teacherInfo.teacher_id) {
-        document.getElementById("teacherName").innerText = teacherInfo.name;
-        document.getElementById("className").innerText = "";
-        loadClasses(teacherInfo.teacher_id);
-      } else {
-        console.error(
-          "Teacher ID is undefined or teacherInfo is not available."
-        );
-      }
+  <footer>
+    <p>&copy; 2024 Hệ Thống Điểm Danh</p>
+    <link href="../stactic/js/scripts.js">
+  </footer>
 
-      function loadClasses(teacherId) {
-        fetch(`/get_classes?teacher_id=${teacherId}`)
-          .then((response) => response.json())
-          .then((data) => {
-            console.log("Classes data:", data);
-            const classList = document.getElementById("classList");
-            classList.innerHTML = "";
-            data.classes.forEach((classItem) => {
-              const div = document.createElement("div");
-              div.className = "class-item";
-              div.innerText = `${classItem.id_class} - ${classItem.name}`;
-              div.onclick = () => {
-                loadStudents(classItem.id_class);
-                document.getElementById("className").innerText = classItem.name; // Cập nhật tên lớp trên header
-              };
-              classList.appendChild(div);
-            });
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  <script>
+    const socket = io();
+    const teacherInfo = JSON.parse(sessionStorage.getItem("teacherInfo"));
+    console.log("Teacher Info:", teacherInfo); // Kiểm tra thông tin giáo viên
+
+    if (teacherInfo && teacherInfo.teacher_id) {
+      document.getElementById("teacherName").innerText = teacherInfo.name;
+      document.getElementById("className").innerText = "";
+      loadClasses(teacherInfo.teacher_id);
+    } else {
+      console.error(
+        "Teacher ID is undefined or teacherInfo is not available."
+      );
+    }
+
+    function loadClasses(teacherId) {
+      fetch(`/get_classes?teacher_id=${teacherId}`)
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Classes data:", data);
+          const classList = document.getElementById("classList");
+          classList.innerHTML = "";
+          data.classes.forEach((classItem) => {
+            const div = document.createElement("div");
+            div.className = "class-item";
+            div.innerText = `${classItem.id_class} - ${classItem.name}`;
+            div.onclick = () => {
+              loadStudents(classItem.id_class);
+              document.getElementById("className").innerText = classItem.name; // Cập nhật tên lớp trên header
+            };
+            classList.appendChild(div);
           });
-      }
+        });
+    }
 
-      function loadStudents(classId) {
-        fetch(`/get_students?class_id=${classId}`)
-          .then((response) => response.json())
-          .then((data) => {
-            const studentTableBody = document
-              .getElementById("studentTable")
-              .getElementsByTagName("tbody")[0];
-            studentTableBody.innerHTML = ""; // Clear previous data
-            data.students.forEach((student) => {
-              const row = studentTableBody.insertRow();
-              row.insertCell(0).innerText = student.MSSV;
-              row.insertCell(1).innerText = student.name;
-              row.insertCell(2).innerText = student.date;
+    function loadStudents(classId) {
+      fetch(`/get_students?class_id=${classId}`)
+        .then((response) => response.json())
+        .then((data) => {
+          const studentTableBody = document
+            .getElementById("studentTable")
+            .getElementsByTagName("tbody")[0];
+          studentTableBody.innerHTML = ""; // Clear previous data
+          data.students.forEach((student) => {
+            const row = studentTableBody.insertRow();
+            row.insertCell(0).innerText = student.MSSV;
+            row.insertCell(1).innerText = student.name;
+            row.insertCell(2).innerText = student.date;
 
-              // Thêm dropdown cho trạng thái
-              const statusCell = row.insertCell(3);
-              const select = document.createElement("select");
-              const presentOption = document.createElement("option");
-              presentOption.value = "Present";
-              presentOption.innerText = "Present";
-              const absentOption = document.createElement("option");
-              absentOption.value = "Absent";
-              absentOption.innerText = "Absent";
-              select.appendChild(presentOption);
-              select.appendChild(absentOption);
-              select.value = student.status; // Đặt giá trị hiện tại
-              statusCell.appendChild(select);
+            // Thêm dropdown cho trạng thái
+            const statusCell = row.insertCell(3);
+            const select = document.createElement("select");
+            const presentOption = document.createElement("option");
+            presentOption.value = "Present";
+            presentOption.innerText = "Present";
+            const absentOption = document.createElement("option");
+            absentOption.value = "Absent";
+            absentOption.innerText = "Absent";
+            select.appendChild(presentOption);
+            select.appendChild(absentOption);
+            select.value = student.status; // Đặt giá trị hiện tại
+            statusCell.appendChild(select);
 
-              // Thêm nút cập nhật
-              const actionCell = row.insertCell(4);
-              const updateButton = document.createElement("button");
-              updateButton.innerText = "Cập nhật";
-              updateButton.onclick = () => {
-                const newStatus = select.value;
-                updateAttendance(student.MSSV, newStatus, student.class_id);
-              };
-              actionCell.appendChild(updateButton);
-            });
+            // Thêm nút cập nhật
+            const actionCell = row.insertCell(4);
+            const updateButton = document.createElement("button");
+            updateButton.innerText = "Cập nhật";
+            updateButton.onclick = () => {
+              const newStatus = select.value;
+              updateAttendance(student.MSSV, newStatus, student.class_id);
+            };
+            actionCell.appendChild(updateButton);
           });
-      }
+        });
+    }
 
-      function updateAttendance(mssv, status, classId) {
-        const date = new Date().toISOString().split("T")[0];
+    function updateAttendance(mssv, status, classId) {
+      const date = new Date().toISOString().split("T")[0];
 
-        // Kiểm tra xem có bản ghi nào đã tồn tại không
-        fetch(`/check_attendance?student_id=${mssv}&date=${date}`)
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.exists) {
-              // Nếu bản ghi tồn tại, xóa nó trước khi thêm bản ghi mới
-              fetch("/delete_attendance", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  MSSV: mssv,
-                  date: date,
-                }),
-              })
+      // Kiểm tra xem có bản ghi nào đã tồn tại không
+      fetch(`/check_attendance?student_id=${mssv}&date=${date}`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.exists) {
+            // Nếu bản ghi tồn tại, xóa nó trước khi thêm bản ghi mới
+            fetch("/delete_attendance", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                MSSV: mssv,
+                date: date,
+              }),
+            })
               .then((response) => response.json())
               .then((deleteData) => {
                 if (deleteData.success) {
@@ -246,26 +165,26 @@
                   console.error("Error deleting old attendance record.");
                 }
               });
-            } else {
-              // Nếu không có bản ghi nào, thêm mới
-              addNewAttendance(mssv, status, classId, date);
-            }
-          });
-      }
+          } else {
+            // Nếu không có bản ghi nào, thêm mới
+            addNewAttendance(mssv, status, classId, date);
+          }
+        });
+    }
 
-      function addNewAttendance(mssv, status, classId, date) {
-        fetch("/update_attendance", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            MSSV: mssv,
-            date: date,
-            status: status,
-            class_id: classId,
-          }),
-        })
+    function addNewAttendance(mssv, status, classId, date) {
+      fetch("/update_attendance", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          MSSV: mssv,
+          date: date,
+          status: status,
+          class_id: classId,
+        }),
+      })
         .then((response) => response.json())
         .then((data) => {
           if (data.success) {
@@ -274,24 +193,25 @@
             console.error("Error updating attendance");
           }
         });
+    }
+
+    socket.on("response", function (data) {
+      if (data.message) {
+        showNotification(data.message);
       }
+    });
 
-      socket.on("response", function (data) {
-        if (data.message) {
-          showNotification(data.message);
-        }
-      });
+    function showNotification(message) {
+      const notification = document.createElement("div");
+      notification.className = "notification";
+      notification.innerText = message;
+      document.body.appendChild(notification);
 
-      function showNotification(message) {
-        const notification = document.createElement("div");
-        notification.className = "notification";
-        notification.innerText = message;
-        document.body.appendChild(notification);
+      setTimeout(() => {
+        notification.remove();
+      }, 5000); // Thời gian hiển thị 5 giây
+    }
+  </script>
+</body>
 
-        setTimeout(() => {
-          notification.remove();
-        }, 5000); // Thời gian hiển thị 5 giây
-      }
-    </script>
-  </body>
 </html>
