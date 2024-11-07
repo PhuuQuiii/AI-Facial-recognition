@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách sinh viên</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        button {
+            padding: 5px 10px;
+            /* background-color: #4CAF50; */
+            color: rgb(25, 25, 25);
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #f4f8f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h3>Danh sách sinh viên</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>MSSV</th>
+                    <th>Tên</th>
+                    <th>Phòng</th>
+                    <th>Ngày</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>12345</td>
+                    <td>Nguyễn Văn A</td>
+                    <td>Phòng 101</td>
+                    <td>01/01/2024</td>
+                    <td>
+                        <select>
+                            <option value="absent">Vắng</option>
+                            <option value="present">Có mặt</option>
+                        </select>
+                    </td>
+                    <td><button>Cập nhật</button></td>
+                </tr>
+                <tr>
+                    <td>12346</td>
+                    <td>Trần Thị B</td>
+                    <td>Phòng 102</td>
+                    <td>01/01/2024</td>
+                    <td>
+                        <select>
+                            <option value="absent">Vắng</option>
+                            <option value="present">Có mặt</option>
+                        </select>
+                    </td>
+                    <td><button>Cập nhật</button></td>
+                </tr>
+                <tr>
+                    <td>12347</td>
+                    <td>Nguyễn Văn C</td>
+                    <td>Phòng 103</td>
+                    <td>01/01/2024</td>
+                    <td>
+                        <select>
+                            <option value="absent">Vắng</option>
+                            <option value="present">Có mặt</option>
+                        </select>
+                    </td>
+                    <td><button>Cập nhật</button></td>
+                </tr>
+                <!-- Thêm hàng sinh viên khác ở đây -->
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
