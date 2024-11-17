@@ -51,7 +51,7 @@ header h1, header h2 {
     list-style-type: none;
     padding: 0;
     max-height: fit-content;
-    overflow: scroll;
+    overflow: unset;
 }
 
 .side-nav ul li {
