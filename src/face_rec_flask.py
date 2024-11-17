@@ -134,10 +134,10 @@ def get_classes():
     except mysql.connector.Error as err:
         print(f"Error: {err}")
     cursor = connection.cursor()
-    cursor.execute("SELECT id_class, name FROM Class WHERE teacher_id = %s", (teacher_id,))
+    cursor.execute("SELECT id_class, name, room FROM Class WHERE teacher_id = %s", (teacher_id,))
     classes = cursor.fetchall()
     print("Classes fetched:", classes)
-    return jsonify({"classes": [{"id_class": cls[0], "name": cls[1]} for cls in classes]})
+    return jsonify({"classes": [{"id_class": cls[0], "name": cls[1], "room": cls[2]} for cls in classes]})
 
 @app.route('/get_students')
 def get_students():

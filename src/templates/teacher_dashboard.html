@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="stylesheet" href="../stactic/css/styles.css">
+  <link rel="stylesheet" href="/static/css/styles.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Teacher Dashboard</title>
 </head>
@@ -11,47 +11,96 @@
 <body>
   <header>
     <h1 id="teacherName">Tên Giáo Viên</h1>
-    <h2>Lớp: <span id="className">Lớp hiện tại</span></h2>
+    <div style="display: flex; gap: 20px">
+        <h2>Lớp: <span id="className">Lớp hiện tại</span></h2>
+        <h2>|</h2>
+        <h2>Phòng: <span id="classRoom">Phòng hiện tại</span></h2>
+    </div>
   </header>
 
   <div class="container">
-    <div class="sidebar">
-      <h3>Danh sách lớp</h3>
+    <div class="side-nav">
       <ul>
         <li>
-          <div class="dropdown">
-            <button style="width:250px;" class="dropdown-btn">Chọn Lớp</button>
-            <div class="dropdown-content">
-              <a href="class.html">ID Class1 - Tên Class1</a>
-              <a href="class.html">ID Class2 - Tên Class2</a>
-              <a href="class.html">ID Class3 - Tên Class3</a>
-              <a href="class.html">ID Class4 - Tên Class4</a>
-            </div>
-          </div>
+          <input type="checkbox" id="tags-toggle" onclick="toggleDropdown(event)">
+          <label for="tags-toggle">Lớp</label>
+          <ul id="class" class="dropdown">
+              <li>
+                <label for="class" onclick=""> 010100087204 - Lập trình Python </label>
+              </li>
+              <li>
+                <label for="class" onclick=""> 010100085003 - Phân tích và thiết kế thuật giải </label>
+              </li>
+              <li>
+                <label for="class" onclick=""> IDClass -  NameClass </label>
+              </li>
+          </ul>
         </li>
         <li><a href="#">Đăng xuất</a></li>
       </ul>
     </div>
-
-    <div style="padding:0px; " class="content" id="studentList">
-      <div style="height:50px;">
-        <ul style="list-style-type: none;background-color:#818487; padding:10px;">
-          <li>
-            <div class="dropdown">
-              <button style="width:90px" class="dropdown-btn">Tuần</button>
-              <div class="dropdown-content">
-                <a href="#">Tuần 1</a>
-                <a href="#">Tuần 2</a>
-                <a href="#">Tuần 3</a>
-                <a href="#">Tuần 4</a>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </div>
-      <div>
-
-      </div>
+    <div class="main-content">
+        <div>
+            <select id="week">
+              <option>Tuần 1</option>
+              <option>Tuần 1</option>
+              <option>Tuần 1</option>
+            </select>
+        </div>
+        <div>
+          <h2 style="margin-left: 15px">Danh sách sinh viên</h2>
+          <div class="table_student">
+              <table id="liststudent">
+                  <thead>
+                      <tr>
+                          <th style="width: 15%;">MSSV</th>
+                          <th style="width: 25%;">Họ tên</th>
+                          <th style="width: 10%">Điểm danh</th>
+                          <th style="width: 10%;">Thao tác</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <tr>
+                        <td>2331540042</td>
+                        <td>Vũ Thái Bình Dương</td>
+                        <td>
+                            <i class="icon-cancel"></i>
+                        </td>
+                        <td>
+                          <div style="position: relative; display: inline-flex; align-items: center;">
+                            <i class="icon-edit" onclick="toggleAttendanceMenu(this)"></i>
+                            <div class="attendance-menu" style="display: none;">
+                              <ul>
+                                <li>Điểm danh</li>
+                                <li>Chưa điểm danh</li>
+                              </ul>
+                            </div>
+                          </div>
+                      </td>
+                      </tr>
+                      <tr>
+                        <td>2331540042</td>
+                        <td>Vũ Thái Bình Dương</td>
+                        <td>
+                            <i class="icon-tick"></i>
+                        </td>
+                        <td>
+                            <div style="position: relative; display: inline-flex; align-items: center;">
+                              <i class="icon-edit" onclick="toggleAttendanceMenu(this)"></i>
+                              <div class="attendance-menu" style="display: none;">
+                                <ul>
+                                  <li>Điểm danh</li>
+                                  <li>Chưa điểm danh</li>
+                                </ul>
+                              </div>
+                            </div>
+                      </td>
+                      </tr>
+                  </tbody>
+              </table>
+          </div>
+        </div>
+        </div>
     </div>
   </div>
 
@@ -62,6 +111,53 @@
 
   <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
   <script>
+    function toggleAttendanceMenu(element) {
+      // Tìm phần tử chứa menu điểm danh tương ứng với dòng hiện tại
+      const menu = element.closest('td').querySelector('.attendance-menu');
+      
+      // Kiểm tra nếu menu đang hiển thị, thì ẩn nó, ngược lại thì hiển thị
+      if (menu.style.display === "block") {
+        menu.style.display = "none";
+      } else {
+        menu.style.display = "block";
+      }
+    }
+
+
+    const checkboxs = document.querySelectorAll('.side-nav input[type="checkbox"]');
+
+    checkboxs.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const liElement = this.closest('li');
+            console.log(liElement.classList);
+
+            if (this.checked) {
+                liElement.classList.add('checked');
+            } else {
+                liElement.classList.remove('checked');
+            }
+        });
+    });
+    function toggleDropdown(event) {
+        const checkboxes = document.querySelectorAll('.side-nav input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            const liElement = checkbox.closest('li');
+            console.log(liElement)
+            if (checkbox !== event.target) {
+                checkbox.checked = false;
+                liElement.classList.remove('checked');
+            }
+            else {
+                liElement.classList.add('checked');
+            }
+        });
+    }
+
+    function updateStatus(status) {
+              // Bạn có thể sử dụng status (attendance/absent) để thay đổi trạng thái
+              const newStatus = status;
+              updateAttendance(student.MSSV, newStatus, student.class_id);
+    }
     const socket = io();
     const teacherInfo = JSON.parse(sessionStorage.getItem("teacherInfo"));
     console.log("Teacher Info:", teacherInfo); // Kiểm tra thông tin giáo viên
@@ -81,17 +177,28 @@
         .then((response) => response.json())
         .then((data) => {
           console.log("Classes data:", data);
-          const classList = document.getElementById("classList");
+          const classList = document.getElementById("class");
+          console.log(classList);
           classList.innerHTML = "";
-          data.classes.forEach((classItem) => {
-            const div = document.createElement("div");
-            div.className = "class-item";
-            div.innerText = `${classItem.id_class} - ${classItem.name}`;
-            div.onclick = () => {
-              loadStudents(classItem.id_class);
-              document.getElementById("className").innerText = classItem.name; // Cập nhật tên lớp trên header
+          data.classes.forEach((i) => {
+            const listItem = document.createElement('li');
+        
+            // Tạo phần tử label và thêm vào listItem
+            const label = document.createElement('label');
+            label.setAttribute('for', 'class');
+            label.innerText = `${i.id_class} - ${i.name}`;
+
+
+            label.onclick = () => {
+              loadStudents(i.id_class);
+              document.getElementById("className").innerText = i.name; // Cập nhật tên lớp trên header
+              document.getElementById("classRoom").innerText = i.room; // Hiển thị table điểm danh
             };
-            classList.appendChild(div);
+            // Gắn label vào listItem
+            listItem.appendChild(label);
+
+            // Thêm listItem vào classList
+            classList.appendChild(listItem);
           });
         });
     }
@@ -100,38 +207,52 @@
       fetch(`/get_students?class_id=${classId}`)
         .then((response) => response.json())
         .then((data) => {
+          console.log(data);
           const studentTableBody = document
-            .getElementById("studentTable")
+            .getElementById("liststudent")
             .getElementsByTagName("tbody")[0];
           studentTableBody.innerHTML = ""; // Clear previous data
           data.students.forEach((student) => {
             const row = studentTableBody.insertRow();
             row.insertCell(0).innerText = student.MSSV;
             row.insertCell(1).innerText = student.name;
-            row.insertCell(2).innerText = student.date;
 
+            if (student.status == "Absent"){
+                row.insertCell(2).innerHTML = '<i class="icon-cancel"></i>';
+            } else {
+              row.insertCell(2).innerHTML = '<i class="icon-tick"></i>';
+            }
             // Thêm dropdown cho trạng thái
-            const statusCell = row.insertCell(3);
-            const select = document.createElement("select");
-            const presentOption = document.createElement("option");
-            presentOption.value = "Present";
-            presentOption.innerText = "Present";
-            const absentOption = document.createElement("option");
-            absentOption.value = "Absent";
-            absentOption.innerText = "Absent";
-            select.appendChild(presentOption);
-            select.appendChild(absentOption);
-            select.value = student.status; // Đặt giá trị hiện tại
-            statusCell.appendChild(select);
+            // const statusCell = row.insertCell(3);
+            // const select = document.createElement("select");
+            // const presentOption = document.createElement("option");
+            // presentOption.value = "Present";
+            // presentOption.innerText = "Present";
+            // const absentOption = document.createElement("option");
+            // absentOption.value = "Absent";
+            // absentOption.innerText = "Absent";
+            // select.appendChild(presentOption);
+            // select.appendChild(absentOption);
+            // select.value = student.status; // Đặt giá trị hiện tại
+            // statusCell.appendChild(select);
 
             // Thêm nút cập nhật
-            const actionCell = row.insertCell(4);
-            const updateButton = document.createElement("button");
-            updateButton.innerText = "Cập nhật";
-            updateButton.onclick = () => {
-              const newStatus = select.value;
-              updateAttendance(student.MSSV, newStatus, student.class_id);
-            };
+            const actionCell = row.insertCell(3);
+            const updateButton = document.createElement('div');
+            updateButton.style.position = 'relative';
+            updateButton.style.display = 'inline-flex';
+            updateButton.style.alignItems = 'center';
+            updateButton.innerHTML = `                              
+                              <i class="icon-edit" onclick="toggleAttendanceMenu(this)"></i>
+                              <div class="attendance-menu" style="display: none;">
+                                <ul>
+                                  <li value="attendance" onclick="updateStatus('attendance')">Điểm danh</li>
+                                  <li value="absent" onclick="updateStatus('absent')">Chưa điểm danh</li>
+                                </ul>
+                              </div>
+            
+            `;
+
             actionCell.appendChild(updateButton);
           });
         });

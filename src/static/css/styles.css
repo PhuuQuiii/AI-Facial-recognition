@@ -1,0 +1,264 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "tahoma";
+    user-select: none;
+}
+body{
+    background: hsl(218, 50%, 91%);
+}
+header{
+    display: flex; 
+    text-align: center; 
+    justify-content: center;
+    margin: 10px 10px; 
+    align-items: 
+    center; gap:20px;
+    background-color: hsl(213, 85%, 97%);
+    border-radius: 5px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+footer{
+    justify-self: center;
+    margin-bottom: 20px;
+}
+
+header h1, header h2 {
+    margin: 0;
+}
+
+.container {
+    font-family: "tahoma";
+    display: flex;
+}
+
+.side-nav {
+    width: 450px;
+    height: 81.5vh;
+    background-color: hsl(213, 85%, 97%);;
+    padding: 20px 0px 20px 0px;
+    overflow: auto;
+    border-radius: 5px;
+    margin-left: 10px;
+    margin-bottom: 10px;
+}
+
+.side-nav ul {
+    list-style-type: none;
+    padding: 0;
+    max-height: fit-content;
+    overflow: scroll;
+}
+
+.side-nav ul li {
+    margin: 10px 10px;
+    border-radius: 50px;
+    background-color: hsl(218, 50%, 91%);
+    text-align: center;
+}
+
+.side-nav ul li label {
+    color: black;
+    text-decoration: none;
+    display: block;
+    padding: 10px 20px;
+    font-size: 18px;
+}
+.side-nav ul li a{
+    color : black;
+    text-decoration: none;
+    display: block;
+    padding: 10px 20px;
+    font-size: 18px;
+}
+.side-nav ul li .htmlhover:focus{
+    background-color: hsl(220, 66%, 86%);
+    border-radius: 50px;
+    transition: background-color 0.3s ease-in-out;
+}
+.side-nav ul li .htmlhover:hover{
+    background-color: hsl(220, 66%, 86%);
+    border-radius: 50px;
+    transition: background-color 0.3s ease-in-out;
+}
+.side-nav ul li:hover{
+    margin: 3px 3px;
+    transition: margin 0.3s ease-in-out;
+}
+.side-nav ul li.checked{
+    margin: 3px 3px;
+    transition: margin 0.3s ease-in-out;
+    background-color: hsl(220, 66%, 86%);
+    border-radius: 25px;
+}
+.side-nav ul li a:hover {
+    background-color: hsl(220, 66%, 86%);
+    border-radius: 50px;
+    transition: background-color 0.3s ease-in-out;
+}
+.side-nav ul li label:hover{
+    background-color: hsl(220, 66%, 86%);
+    border-radius: 50px;
+    transition: background-color 0.3s ease-in-out;
+}
+.side-nav ul li label:hover{
+    background-color: hsl(220, 66%, 86%);
+    border-radius: 50px;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.dropdown {
+    display: none;
+    background-color: hsl(218, 50%, 91%);
+}
+
+.side-nav ul li .dropdown li {
+    margin: 0;
+}
+.side-nav ul li .dropdown li label:hover {
+    background-color: hsl(220, 66%, 86%);
+    border-radius: 0px;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.side-nav ul li .dropdown li label {
+    padding-left:  20px;
+    font-size: 18px;
+}
+input[type="checkbox"] {
+    display: none;
+}
+input[type="checkbox"]:checked + label{
+    background-color: hsl(220, 66%, 86%);
+    border-radius: 50px;
+}
+input[type="checkbox"]:checked + label + .dropdown{
+    display: block;
+    max-height: 47.5vh;
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+}
+
+.main-content {
+    margin: 0px 10px 10px 10px;
+    border-radius: 5px;
+    padding: 0px 10px;
+    width: 90%;
+    background: hsl(213, 85%, 97%);
+}
+
+.main-content select {
+    height: 40px;
+    font-size: 18px;
+    border: 2px solid hsl(218, 50%, 91%);
+    border-radius: 15px;
+    padding: 0px 10px;
+    margin: 10px 0px 10px 0px;
+}
+
+.container-fluid {
+    height: 81.5vh;
+    width: 100%;
+    overflow: auto;
+    background: hsl(213, 85%, 97%);
+    border-radius: 5px;
+}
+
+iframe {
+    width: 100%;
+    height: 81.5vh;
+    background: hsl(213, 85%, 97%);
+    border-radius: 5px;
+    border: none;
+}
+
+h3 {
+    margin-top: 15px;
+    color: #000000;
+}
+
+p {
+    margin-top: 10px;
+    color: #000000;
+}
+.table_student{
+
+    width: 95%;
+    margin: 1% auto;
+    box-sizing: border-box;
+    text-align: center;
+}
+.table_student thead {
+    background-color: hsl(218, 50%, 91%);
+    color: #1da1f2;
+}
+.table_student table {
+    border-collapse:collapse;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 1%;
+}
+.table_student td, .table_student th{
+    border: 1px solid #c9d0db;
+    padding: 5px;
+}
+.icon-cancel{
+    width: 20px;
+    height: 20px;
+    background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMjBweCIgaGVpZ2h0PSIyMHB4IiB2aWV3Qm94PSIwIDAgMjAgMjAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDUyLjUgKDY3NDY5KSAtIGh0dHA6Ly93d3cuYm9oZW1pYW5jb2RpbmcuY29tL3NrZXRjaCAtLT4KICAgIDx0aXRsZT5jYW5jZWw8L3RpdGxlPgogICAgPGRlc2M+Q3JlYXRlZCB3aXRoIFNrZXRjaC48L2Rlc2M+CiAgICA8ZyBpZD0iSWNvbnMiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJSb3VuZGVkIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMjA0LjAwMDAwMCwgLTM0MzQuMDAwMDAwKSI+CiAgICAgICAgICAgIDxnIGlkPSJOYXZpZ2F0aW9uIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMDAuMDAwMDAwLCAzMzc4LjAwMDAwMCkiPgogICAgICAgICAgICAgICAgPGcgaWQ9Ii1Sb3VuZC0vLU5hdmlnYXRpb24tLy1jYW5jZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEwMi4wMDAwMDAsIDU0LjAwMDAwMCkiPgogICAgICAgICAgICAgICAgICAgIDxnPgogICAgICAgICAgICAgICAgICAgICAgICA8cG9seWdvbiBpZD0iUGF0aCIgb3BhY2l0eT0iMC44NyIgcG9pbnRzPSIwIDAgMjQgMCAyNCAyNCAwIDI0Ij48L3BvbHlnb24+CiAgICAgICAgICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0xMiwyIEM2LjQ3LDIgMiw2LjQ3IDIsMTIgQzIsMTcuNTMgNi40NywyMiAxMiwyMiBDMTcuNTMsMjIgMjIsMTcuNTMgMjIsMTIgQzIyLDYuNDcgMTcuNTMsMiAxMiwyIFogTTE2LjMsMTYuMyBDMTUuOTEsMTYuNjkgMTUuMjgsMTYuNjkgMTQuODksMTYuMyBMMTIsMTMuNDEgTDkuMTEsMTYuMyBDOC43MiwxNi42OSA4LjA5LDE2LjY5IDcuNywxNi4zIEM3LjMxLDE1LjkxIDcuMzEsMTUuMjggNy43LDE0Ljg5IEwxMC41OSwxMiBMNy43LDkuMTEgQzcuMzEsOC43MiA3LjMxLDguMDkgNy43LDcuNyBDOC4wOSw3LjMxIDguNzIsNy4zMSA5LjExLDcuNyBMMTIsMTAuNTkgTDE0Ljg5LDcuNyBDMTUuMjgsNy4zMSAxNS45MSw3LjMxIDE2LjMsNy43IEMxNi42OSw4LjA5IDE2LjY5LDguNzIgMTYuMyw5LjExIEwxMy40MSwxMiBMMTYuMywxNC44OSBDMTYuNjgsMTUuMjcgMTYuNjgsMTUuOTEgMTYuMywxNi4zIFoiIGlkPSLwn5S5LUljb24tQ29sb3IiIGZpbGw9IiMxRDFEMUQiPjwvcGF0aD4KICAgICAgICAgICAgICAgICAgICA8L2c+CiAgICAgICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDwvZz4KICAgICAgICA8L2c+CiAgICA8L2c+Cjwvc3ZnPg==');
+    filter: invert(25%) sepia(100%) saturate(1000%) hue-rotate(0deg) brightness(100%) contrast(100%);
+    display: flex;
+    justify-self: center;
+    background-size: contain;
+}
+
+.icon-tick{
+    width: 20px;
+    height: 20px;
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIHZpZXdCb3g9IjAgMCAxNSAxNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0wIDcuNUMwIDMuMzU3ODYgMy4zNTc4NiAwIDcuNSAwQzExLjY0MjEgMCAxNSAzLjM1Nzg2IDE1IDcuNUMxNSAxMS42NDIxIDExLjY0MjEgMTUgNy41IDE1QzMuMzU3ODYgMTUgMCAxMS42NDIxIDAgNy41Wk03LjA3MTggMTAuNzEwNkwxMS4zOTA1IDUuMzEyMzJMMTAuNjA5NiA0LjY4NzYyTDYuOTI4MjUgOS4yODkzTDQuMzIwMTIgNy4xMTU4NkwzLjY3OTkzIDcuODg0MDhMNy4wNzE4IDEwLjcxMDZaIiBmaWxsPSJibGFjayIvPgo8L3N2Zz4K');
+    filter: invert(31%) sepia(79%) saturate(500%) hue-rotate(90deg) brightness(100%) contrast(100%);
+    display: flex;
+    justify-self: center;
+    background-size: contain;
+}
+
+.icon-edit {
+    width: 20px;
+    height: 20px;
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iY3VycmVudENvbG9yIiBjbGFzcz0iYmkgYmktbGlzdCIgdmlld0JveD0iMCAwIDE2IDE2Ij4KICA8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yLjUgMTJhLjUuNSAwIDAgMSAuNS0uNWgxMGEuNS41IDAgMCAxIDAgMUgzYS41LjUgMCAwIDEtLjUtLjV6bTAtNGEuNS41IDAgMCAxIC41LS41aDEwYS41LjUgMCAwIDEgMCAxSDNhLjUuNSAwIDAgMS0uNS0uNXptMC00YS41LjUgMCAwIDEgLjUtLjVoMTBhLjUuNSAwIDAgMSAwIDFIM2EuNS41IDAgMCAxLS41LS41eiIvPgo8L3N2Zz4=');
+    display: flex;
+    justify-self: center;
+    background-size: contain;
+
+}
+.attendance-menu {
+    position: absolute;
+    left: 90% !important;
+    background-color: white;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+    width: 120px;
+    z-index: 1;
+  }
+  
+  .attendance-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .attendance-menu ul li {
+    padding: 10px;
+    cursor: pointer;
+  
+  }
+  
+  .attendance-menu ul li:hover {
+    background-color: hsl(220, 66%, 86%);
+    transition: background-color 0.3s ease-in-out;
+  }
