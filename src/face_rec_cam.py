@@ -22,11 +22,31 @@ from flask import Flask
 from flask_socketio import SocketIO
 from socketio import Client
 from dotenv import load_dotenv
+import datetime
 
 # Khởi tạo Flask app
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 socketio_client = Client()
+
+attendance_log = {}
+
+def check_attendance(MSSV):
+    today = str(datetime.date.today())
+
+    # Nếu ngày hôm nay chưa tồn tại trong attendance_log, khởi tạo một set mới
+    if today not in attendance_log:
+        attendance_log[today] = set()
+
+    # Kiểm tra nếu MSSV đã có trong set của ngày hôm nay
+    if MSSV in attendance_log[today]:
+        print(f"Sinh viên {MSSV} đã điểm danh hôm nay.")
+        return False
+    else:
+        # Nếu chưa điểm danh, thêm MSSV vào set và trả về True
+        attendance_log[today].add(MSSV)
+        print(f"Sinh viên {MSSV} được điểm danh.")
+        return True
 
 def main():
     # Kết nối đến server
@@ -126,12 +146,15 @@ def main():
                                     cv2.putText(frame, name, (text_x, text_y), cv2.FONT_HERSHEY_COMPLEX_SMALL,
                                                 1, (255, 255, 255), thickness=1, lineType=2)
                                     cv2.putText(frame, str(round(best_class_probabilities[0], 3)), (text_x, text_y + 17),
-                                                cv2.FONT_HERSHEY_COMPLEX_SMALL,
-                                                1, (255, 255, 255), thickness=1, lineType=2)
-                                    person_detected[best_name] += 1
+                                                cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), thickness=1, lineType=2)
 
-                                    # Gửi thông báo đến giáo viên qua SocketIO
-                                    socketio_client.emit('response', {"MSSV": best_name})
+                                    # Gửi thông báo qua SocketIO nếu chưa điểm danh hôm nay
+                                    if check_attendance(best_name):
+                                        socketio_client.emit('response', {"MSSV": best_name})
+                                        print(f"Đã gửi socket điểm danh cho sinh viên: {name} (MSSV: {best_name})")
+                                    else:
+                                        print(f"Sinh viên {name} (MSSV: {best_name}) đã điểm danh trước đó.")
+
                                 else:
                                     name = "Unknown"
                 except Exception as e:
