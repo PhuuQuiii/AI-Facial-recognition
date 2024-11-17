@@ -1,27 +1,25 @@
-"""Imports a model metagraph and checkpoint file, converts the variables to constants
-and exports the model as a graphdef protobuf
-"""
-# MIT License
-# 
-# Copyright (c) 2016 David Sandberg
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+# Đoạn mã này được viết bằng Python và sử dụng TensorFlow để xuất một mô hình học sâu thành một định dạng có thể lưu trữ và sử dụng lại. Dưới đây là giải thích chi tiết từng phần trong đoạn mã:
+
+#  2. Hàm `main(args)`
+# - Tạo một đồ thị TensorFlow mới và bắt đầu một phiên làm việc (`Session`).
+# - Tải mô hình bằng cách sử dụng tên tệp metagraph và checkpoint từ thư mục mô hình mà người dùng đã chỉ định.
+# - In ra đường dẫn đến các tệp metagraph và checkpoint.
+# - Khởi tạo các biến toàn cục và cục bộ trong mô hình.
+# - Khôi phục mô hình từ checkpoint.
+# - Lấy định nghĩa đồ thị và sửa đổi các nút chuẩn hóa (batch norm).
+# - Gọi hàm `freeze_graph_def` để chuyển đổi các biến trong đồ thị thành hằng số.
+
+#  3. Hàm `freeze_graph_def(sess, input_graph_def, output_node_names)`
+# - Sửa đổi các nút trong định nghĩa đồ thị để thay thế một số loại nút (như `RefSwitch`, `AssignSub`, `AssignAdd`) bằng các nút tương ứng mà không yêu cầu khoá (lock).
+# - Tạo danh sách các nút quan trọng cần giữ lại trong đồ thị (như các nút liên quan đến đầu vào và đầu ra của mô hình).
+# - Sử dụng `graph_util.convert_variables_to_constants` để thay thế tất cả các biến trong đồ thị bằng các hằng số với cùng giá trị, chỉ định các nút đầu ra để giữ lại.
+
+#  4. Hàm `parse_arguments(argv)`
+# - Định nghĩa và phân tích các tham số đầu vào từ dòng lệnh.
+# - Chấp nhận hai đối số: thư mục chứa mô hình và tên tệp xuất ra định dạng protobuf.
+
+# Đoạn mã này giúp chuyển đổi một mô hình học sâu (cụ thể là một mô hình nhận diện khuôn mặt) thành một định dạng có thể sử dụng lại mà không cần phải khởi tạo lại các biến.
+# Nó hỗ trợ việc đóng gói mô hình và chia sẻ mô hình đã huấn luyện cho các ứng dụng khác mà không cần phải biết đến kiến trúc bên trong hoặc các tham số.
 
 from __future__ import absolute_import
 from __future__ import division

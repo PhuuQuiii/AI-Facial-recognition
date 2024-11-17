@@ -1,27 +1,25 @@
-"""Helper for evaluation on the Labeled Faces in the Wild dataset 
-"""
+# Đoạn mã này là một trợ giúp cho việc đánh giá trên tập dữ liệu "Labeled Faces in the Wild" (LFW). Nó chứa một số hàm để xử lý và đánh giá hiệu suất của mô hình nhận dạng khuôn mặt. Dưới đây là phần giải thích chi tiết cho từng phần trong mã:
 
-# MIT License
-# 
-# Copyright (c) 2016 David Sandberg
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+# 3. Hàm `evaluate`:
+#    - Nhận đầu vào là `embeddings` (các vector đặc trưng của khuôn mặt), `actual_issame` (một mảng cho biết các cặp khuôn mặt có phải là của cùng một người hay không), `nrof_folds`, `distance_metric`, và `subtract_mean`.
+#    - Hàm này tính toán các chỉ số đánh giá như True Positive Rate (TPR), False Positive Rate (FPR), và độ chính xác của mô hình.
+#    - Nó sử dụng hai hàm từ thư viện `facenet`: `calculate_roc` để tính TPR và FPR, và `calculate_val` để tính giá trị ngưỡng (val) và độ lệch chuẩn của nó (val_std).
+
+# 4. Hàm `get_paths`:
+#    - Nhận vào thư mục chứa LFW (`lfw_dir`) và các cặp hình ảnh (`pairs`).
+#    - Tạo danh sách đường dẫn đến các tệp hình ảnh và một danh sách cho biết cặp hình ảnh có phải là cùng một người hay không (`issame_list`).
+#    - Nếu cả hai hình ảnh trong cặp tồn tại, chúng sẽ được thêm vào danh sách. Nếu không, số lượng cặp bị bỏ qua sẽ được tăng lên và thông báo số lượng cặp bị bỏ qua sẽ được in ra.
+
+# 5. Hàm `add_extension`:
+#    - Nhận vào một đường dẫn và kiểm tra xem tệp với phần mở rộng `.jpg` hoặc `.png` có tồn tại hay không.
+#    - Nếu tìm thấy tệp, trả về đường dẫn có phần mở rộng. Nếu không, sẽ phát sinh lỗi với thông báo rằng không tìm thấy tệp với phần mở rộng tương ứng.
+
+# 6. Hàm `read_pairs`:
+#    - Nhận vào tên tệp chứa danh sách các cặp hình ảnh.
+#    - Đọc nội dung của tệp và tạo ra danh sách các cặp (mỗi cặp là một mảng chứa thông tin về hình ảnh).
+#    - Trả về danh sách các cặp dưới dạng mảng NumPy.
+
+# Mã này rất hữu ích trong việc đánh giá các mô hình nhận dạng khuôn mặt, đặc biệt là khi làm việc với tập dữ liệu LFW. Nó giúp người dùng đọc và xử lý dữ liệu đầu vào, tính toán các chỉ số đánh giá hiệu suất và tạo danh sách các cặp hình ảnh cho việc so sánh và đánh giá.
 
 from __future__ import absolute_import
 from __future__ import division

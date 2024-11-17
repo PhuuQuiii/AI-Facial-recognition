@@ -1,29 +1,23 @@
-"""Validate a face recognizer on the "Labeled Faces in the Wild" dataset (http://vis-www.cs.umass.edu/lfw/).
-Embeddings are calculated using the pairs from http://vis-www.cs.umass.edu/lfw/pairs.txt and the ROC curve
-is calculated and plotted. Both the model metagraph and the model parameters need to exist
-in the same directory, and the metagraph should have the extension '.meta'.
-"""
-# MIT License
-# 
-# Copyright (c) 2016 David Sandberg
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+# Chương trình trên là một đoạn mã Python sử dụng TensorFlow để đánh giá một mô hình nhận diện khuôn mặt trên tập dữ liệu "Labeled Faces in the Wild" (LFW). Dưới đây là giải thích chi tiết về từng phần của mã:
+
+#  2. Hàm `main`
+# - Graph và Session: Tạo một đồ thị TensorFlow và khởi động một phiên làm việc.
+# - Đọc các cặp khuôn mặt: Sử dụng hàm `lfw.read_pairs` để đọc các cặp khuôn mặt từ tập dữ liệu.
+# - Khởi tạo các placeholder: Các biến dùng để nhận đầu vào cho mô hình.
+# - Tạo hàng đợi cho đầu vào: Sử dụng FIFOQueue để xếp hàng các hình ảnh và nhãn để xử lý.
+# - Tải mô hình: Tải mô hình đã được huấn luyện trước đó từ thư mục cung cấp.
+# - Gọi hàm `evaluate`: Đánh giá mô hình với các hình ảnh từ tập dữ liệu LFW.
+
+#  3. Hàm `evaluate`
+# - Chạy đánh giá: Thực hiện tính toán embedding cho các hình ảnh và đánh giá mô hình.
+# - Xếp hàng các hình ảnh: Đưa hình ảnh vào hàng đợi để xử lý.
+# - Tính toán embedding: Gọi mô hình để tính toán các embedding cho các hình ảnh.
+# - Tính toán độ chính xác: Đánh giá các embedding với hàm `lfw.evaluate`, trả về các chỉ số như TPR (True Positive Rate), FPR (False Positive Rate), độ chính xác, AUC (Area Under Curve), và EER (Equal Error Rate).
+
+#  4. Hàm `parse_arguments`
+# - Phân tích đối số dòng lệnh: Sử dụng `argparse` để lấy các đối số từ dòng lệnh, như đường dẫn tới tập dữ liệu LFW, kích thước hình ảnh, mô hình, và các tham số đánh giá.
+
+# Chương trình này thực hiện việc đánh giá một mô hình nhận diện khuôn mặt trên tập dữ liệu LFW, bao gồm việc tính toán các embedding khuôn mặt và đánh giá hiệu suất của mô hình thông qua các chỉ số như độ chính xác, AUC, và EER. Các tham số có thể được cấu hình thông qua dòng lệnh khi chạy chương trình.
 
 from __future__ import absolute_import
 from __future__ import division

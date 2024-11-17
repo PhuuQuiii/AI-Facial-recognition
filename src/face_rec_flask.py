@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 load_dotenv() 
 import os
 import datetime
+import base64
+import subprocess
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY') # Thay đổi secret key cho bảo mật
 CORS(app)  # Để cho phép tất cả các nguồn kết nối
@@ -27,8 +29,11 @@ sess = tf.compat.v1.Session()
 facenet.load_model('../Models/20180402-114759.pb')
 
 @app.route('/')
-def index():
+def home():
     return render_template('index.html')
+@app.route('/student')
+def student():
+    return render_template('student.html')
 @app.route('/login_teacher', methods=['GET', 'POST'])
 def login_teacher():
     if request.method == 'POST':
@@ -225,6 +230,50 @@ def delete_attendance():
     connection.close()
 
     return jsonify({"success": True})
+
+@app.route('/save_images', methods=['POST'])
+def save_images():
+    data = request.get_json()
+    student_id = data['studentId']
+    images = data['images']
+
+    # Đường dẫn đến thư mục raw trong thư mục FaceData
+    directory = f'E:/DoAN/Facial_recognition/Dataset/FaceData/raw/{student_id}'
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    # Lưu từng ảnh vào thư mục
+    for i, image in enumerate(images):
+        # Xử lý dữ liệu base64
+        image_data = image.split(",")[1]
+        try:
+            with open(f"{directory}/{student_id}_{i + 1}.jpg", "wb") as fh:
+                fh.write(base64.b64decode(image_data))
+            print(f"Saved image: {student_id}_{i + 1}.jpg")
+        except Exception as e:
+            print(f"Error saving image {i + 1}: {e}")
+
+    return jsonify({"success": True})
+
+@app.route('/preprocess_data', methods=['POST'])
+def preprocess_data():
+    try:
+        # Chạy lệnh tiền xử lý
+        subprocess.run(['python', 'align_dataset_mtcnn.py', '../Dataset/FaceData/raw', '../Dataset/FaceData/processed', '--image_size', '160', '--margin', '32', '--random_order', '--gpu_memory_fraction', '0.25'], check=True)
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"Error during preprocessing: {e}")
+        return jsonify({"success": False, "message": str(e)})
+
+@app.route('/train_model', methods=['POST'])
+def train_model():
+    try:
+        # Chạy lệnh huấn luyện
+        subprocess.run(['python', 'classifier.py', 'TRAIN', '../Dataset/FaceData/processed', '../Models/20180402-114759.pb', '../Models/facemodel.pkl', '--batch_size', '1000'], check=True)
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"Error during training: {e}")
+        return jsonify({"success": False, "message": str(e)})
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

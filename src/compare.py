@@ -1,26 +1,35 @@
-"""Performs face alignment and calculates L2 distance between the embeddings of images."""
+# Đây là mã Python cho phép căn chỉnh khuôn mặt và tính toán khoảng cách L2 giữa các embeddings (biểu diễn đặc trưng)
+#  của các ảnh khuôn mặt. Mã này sử dụng TensorFlow và thư viện `facenet` để tải mô hình học sâu và tính toán embeddings khuôn mặt,
+#  cũng như thư viện `align.detect_face` để phát hiện khuôn mặt.
 
-# MIT License
-# 
-# Copyright (c) 2016 David Sandberg
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+#  2. Hàm chính (`main`)
+
+# - `main(args)` lấy danh sách ảnh đầu vào từ `args`, tải và căn chỉnh ảnh qua hàm `load_and_align_data`.
+# - `tf.Graph().as_default()` tạo đồ thị tính toán của TensorFlow.
+# - `facenet.load_model(args.model)` tải mô hình đã được huấn luyện trước.
+# - `images_placeholder`, `embeddings`, và `phase_train_placeholder` là các tensor đầu vào và đầu ra của mô hình.
+# - `feed_dict` truyền các ảnh đã căn chỉnh vào mô hình để tính embeddings.
+# - Tính toán ma trận khoảng cách giữa các ảnh bằng cách tính khoảng cách L2 giữa các embeddings.
+
+#  3. Hàm `load_and_align_data`
+# - `minsize`, `threshold`, và `factor` xác định các tham số để phát hiện khuôn mặt.
+# - `pnet`, `rnet`, và `onet` là các mạng dùng trong MTCNN để phát hiện khuôn mặt.
+# - Duyệt qua danh sách ảnh, mỗi ảnh sẽ:
+#   - Được đọc và chuyển về RGB.
+#   - Xác định hộp chứa khuôn mặt (`bounding_boxes`) bằng MTCNN.
+#   - Cắt và căn chỉnh khuôn mặt theo hộp đã phát hiện và `margin` (lề).
+#   - Chuẩn hóa khuôn mặt (`prewhitened`) trước khi thêm vào `img_list`.
+# - Trả về mảng `images` chứa các khuôn mặt đã căn chỉnh.
+
+#  4. Hàm `parse_arguments`
+# - Đọc các tham số từ dòng lệnh, bao gồm:
+#   - `model`: đường dẫn tới mô hình đã huấn luyện.
+#   - `image_files`: danh sách đường dẫn ảnh cần so sánh.
+#   - `image_size`, `margin`, `gpu_memory_fraction`: các tham số tùy chọn.
+
+# Mã này đọc và căn chỉnh các ảnh khuôn mặt, sau đó sử dụng mô hình `facenet` để tạo embeddings.
+#  Nó tính toán và in ra ma trận khoảng cách giữa các embeddings của các ảnh,
+#  từ đó đánh giá mức độ tương đồng giữa các khuôn mặt.
 
 from __future__ import absolute_import
 from __future__ import division

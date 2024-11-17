@@ -1,24 +1,42 @@
-# 1. Xử lý dữ liệu khuôn mặt:
-#    - Đọc tập dữ liệu hình ảnh khuôn mặt từ thư mục được chỉ định.
-#    - Sử dụng một mô hình đã được huấn luyện trước (pretrained model) để tạo ra các embedding cho mỗi hình ảnh khuôn mặt.
 
-# 2. Tính toán các chỉ số lọc:
-#    - Tính toán trung tâm (center) cho mỗi lớp (mỗi người) trong không gian embedding.
-#    - Tính khoảng cách từ mỗi embedding đến trung tâm của lớp tương ứng.
+    #    1.     Xử lý dữ liệu khuôn mặt    
+    #       `dataset = facenet.get_dataset(args.dataset_dir)`    : Đọc tập dữ liệu khuôn mặt từ thư mục `dataset_dir`. Mỗi thư mục con trong `dataset_dir` đại diện cho một lớp (một người) và chứa các ảnh khuôn mặt của người đó. Kết quả `dataset` chứa thông tin về các lớp và đường dẫn đến ảnh tương ứng.
+    #       Mô hình đã huấn luyện trước (pretrained model)    : Script này sử dụng mô hình được huấn luyện trước (`20180402  114759.pb`) để tạo ra các `embedding` cho mỗi ảnh khuôn mặt.
+ 
 
-# 3. Đánh giá chất lượng dữ liệu:
-#    - Sử dụng các chỉ số đã tính toán để đánh giá chất lượng của các hình ảnh trong dataset.
-#    - Điều này có thể giúp xác định các hình ảnh không phù hợp hoặc có chất lượng kém.
+    #    2.     Xử lý ảnh và tạo Embedding    
+    #       Đọc và xử lý dữ liệu ảnh    : Các ảnh được lấy từ `image_list`, là danh sách đường dẫn đến ảnh, và `label_list`, là danh sách nhãn cho các ảnh tương ứng. `nrof_images` là tổng số ảnh trong tập dữ liệu.
+    #       `facenet.read_and_augment_data(...)`    : Hàm này tạo các batch ảnh (theo kích thước `batch_size`) và áp dụng tiền xử lý cho ảnh để chuẩn bị cho quá trình tạo `embedding`.
+    #       Tải mô hình và khởi tạo TensorFlow session    : Script nạp file mô hình `model_file` (.pb) và thiết lập các tensor cần thiết. Tensor `embeddings` đại diện cho các `embedding` của ảnh trong không gian đa chiều.
+     
 
-# 4. Lưu trữ kết quả:
-#    - Ghi các thông tin đã tính toán vào một file HDF5, bao gồm tên lớp, danh sách hình ảnh, danh sách nhãn và khoảng cách đến trung tâm.
+    #    3.     Tính toán trung tâm và phương sai    
+    #       `embedding_size`    : Kích thước của vector `embedding`.
+    #       `class_center` và `distance_to_center`    : `class_center` lưu trữ trung tâm của từng lớp, còn `distance_to_center` lưu khoảng cách từ mỗi `embedding` đến trung tâm lớp tương ứng.
+    #       `emb_array`    : Lưu trữ các `embedding` của ảnh, còn `lab_array` chứa nhãn tương ứng.
+    #       Tính trung tâm cho từng lớp    :
+    #     Lặp qua các batch ảnh và tính trung tâm cho mỗi lớp bằng cách tính giá trị trung bình của các `embedding` thuộc cùng lớp.
+    #         Tính khoảng cách giữa từng embedding và trung tâm lớp    : Đo khoảng cách Euclidean bình phương và tính phương sai (`class_variance`) cho mỗi lớp.
+   
 
-# 5. Tiền xử lý dữ liệu:
-#    - Script này có thể được sử dụng như một công cụ tiền xử lý để cải thiện chất lượng của tập dữ liệu khuôn mặt trước khi sử dụng cho các tác vụ nhận dạng khuôn mặt.
+    #    4.     Lưu trữ kết quả    
+    #       `distance_to_center`    : Lưu khoảng cách của mỗi `embedding` đến trung tâm lớp của nó.
+    #       Ghi dữ liệu lọc vào file HDF5    : Lưu các thông tin quan trọng (như tên lớp, danh sách ảnh, danh sách nhãn, và khoảng cách đến trung tâm) vào file `data_file_name`. Điều này giúp lưu trữ và truy xuất dữ liệu dễ dàng.
+ 
 
-# Trong không gian embedding, trung tâm là vector trung bình của tất cả các embedding thuộc cùng một lớp (trong trường hợp này là cùng một người).
-# Embedding trong ngữ cảnh này là một vector số học đại diện cho một hình ảnh khuôn mặt trong không gian đa chiều
+    #    5.     Tiền xử lý dữ liệu    
+    #   Script này có thể được dùng như một công cụ tiền xử lý để cải thiện chất lượng tập dữ liệu khuôn mặt trước khi thực hiện nhận dạng. Những ảnh có khoảng cách đến trung tâm quá lớn có thể bị coi là chất lượng kém hoặc không phù hợp.
 
+    #    6.     Định nghĩa các đối số dòng lệnh    
+    #   Sử dụng `argparse` để xác định các tham số của script, bao gồm:
+    #     `dataset_dir`: Đường dẫn đến thư mục chứa tập dữ liệu.
+    #     `model_file`: Đường dẫn đến file mô hình đã huấn luyện trước.
+    #     `data_file_name`: Tên file để lưu trữ kết quả lọc.
+    #     `image_size` và `batch_size`: Kích thước ảnh và số lượng ảnh trong mỗi batch.
+
+      
+
+      
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function

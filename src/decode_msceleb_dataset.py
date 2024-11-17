@@ -1,27 +1,39 @@
-"""Decode the MsCelebV1 dataset in TSV (tab separated values) format downloaded from
-https://www.microsoft.com/en-us/research/project/ms-celeb-1m-challenge-recognizing-one-million-celebrities-real-world/
-"""
-# MIT License
-# 
-# Copyright (c) 2016 David Sandberg
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+# Đoạn mã trên là một script để giải mã và xử lý dữ liệu hình ảnh từ tập dữ liệu MsCelebV1 được lưu dưới định dạng TSV (Tab Separated Values).
+# Dữ liệu TSV này chứa các thông tin về hình ảnh của người nổi tiếng, được mã hóa dưới dạng base64. 
+
+#  2. Cấu trúc của tập tin TSV:
+# - Tập tin TSV có sáu cột, mỗi cột chứa các thông tin sau:
+#   - Cột 1: `Freebase MID` - ID của người nổi tiếng trong cơ sở dữ liệu Freebase.
+#   - Cột 2: `Query/Name` - Tên hoặc truy vấn của người nổi tiếng.
+#   - Cột 3: `ImageSearchRank` - Độ xếp hạng của hình ảnh.
+#   - Cột 4: `ImageURL` - URL của hình ảnh.
+#   - Cột 5: `PageURL` - URL của trang chứa hình ảnh.
+#   - Cột 6: `ImageData_Base64Encoded` - Dữ liệu hình ảnh mã hóa dưới dạng base64.
+
+#  3. Hàm `main(args)`:
+# Hàm `main` là hàm chính, có chức năng:
+# - Tạo thư mục đầu ra: Từ tham số `output_dir`, kiểm tra xem thư mục đã tồn tại chưa, nếu chưa thì tạo mới thư mục này.
+# - Lưu thông tin phiên bản mã nguồn: Dùng `facenet.store_revision_info` để lưu thông tin mã nguồn của phiên bản hiện tại trong thư mục đầu ra.
+# - Đọc và giải mã dữ liệu hình ảnh: Vòng lặp duyệt qua từng tập tin TSV trong `args.tsv_files`, với từng dòng:
+#   - Tách dòng thành các `fields` bằng cách sử dụng dấu tab (`\t`) làm ký tự phân tách.
+#   - Tạo thư mục `class_dir` dựa trên `Freebase MID`.
+#   - Tạo tên hình ảnh `img_name` bằng cách ghép `Query/Name` và `PageURL`.
+#   - Giải mã chuỗi base64 trong `fields[5]` để thu được dữ liệu hình ảnh (`img_data`), sau đó chuyển đổi dữ liệu này thành mảng ảnh `img` bằng OpenCV (`cv2`).
+#   - Nếu có tham số `size`, ảnh sẽ được thay đổi kích thước về kích thước đã cho (`args.size`).
+#   - Lưu ảnh vào thư mục `class_dir` với định dạng `png` hoặc `jpg` như đã xác định trong `args.output_format`.
+
+#  4. Hàm `argparse.ArgumentParser()`:
+# - Định nghĩa các tham số dòng lệnh mà script nhận vào, gồm:
+#   - `output_dir`: Thư mục đầu ra cho tập dữ liệu ảnh.
+#   - `tsv_files`: Danh sách các tập tin TSV đầu vào.
+#   - `--size`: Tham số tùy chọn để xác định kích thước ảnh đầu ra.
+#   - `--output_format`: Định dạng ảnh đầu ra, mặc định là `png`.
+ 
+# Đoạn mã này thực hiện việc giải mã và lưu ảnh từ tập dữ liệu MsCelebV1 theo các bước sau:
+# 1. Đọc dữ liệu TSV.
+# 2. Giải mã dữ liệu ảnh từ base64.
+# 3. Thay đổi kích thước ảnh (nếu cần) và lưu vào thư mục đầu ra theo cấu trúc `Freebase MID`.
+
 
 from __future__ import absolute_import
 from __future__ import division

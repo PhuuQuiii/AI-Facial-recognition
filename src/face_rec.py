@@ -1,3 +1,68 @@
+# Đoạn mã bạn cung cấp là một ứng dụng nhận diện khuôn mặt sử dụng TensorFlow và OpenCV. Dưới đây là giải thích chi tiết cho từng phần của mã:
+
+#  2. Nhập các thư viện cần thiết
+
+# - Các thư viện được nhập vào để phục vụ cho các chức năng như:
+#   - `argparse`: Để xử lý các tham số dòng lệnh.
+#   - `facenet`: Mô hình nhận diện khuôn mặt.
+#   - `cv2`: Thư viện OpenCV để xử lý hình ảnh và video.
+#   - `mysql.connector`: Để kết nối và tương tác với cơ sở dữ liệu MySQL.
+#   - `json`: Để xử lý dữ liệu JSON.
+
+#  3. Hàm chính
+
+# - Tạo một đối tượng `ArgumentParser` để nhận đường dẫn video từ người dùng. Nếu không có, mặc định là sử dụng webcam (0).
+
+#  4. Thiết lập các tham số cần thiết
+
+# - Thiết lập các tham số cho việc phát hiện và nhận diện khuôn mặt như kích thước tối thiểu, ngưỡng phát hiện, kích thước đầu vào của hình ảnh, đường dẫn tới mô hình classifier và mô hình Facenet.
+
+#  5. Tải mô hình đã huấn luyện
+
+# - Tải mô hình classifier đã huấn luyện từ tệp pickle.
+
+#  6. Khởi tạo TensorFlow
+
+# - Tạo một đồ thị TensorFlow mới và khởi tạo phiên làm việc. Tùy chọn GPU để giới hạn bộ nhớ GPU sử dụng.
+
+#  7. Tải mô hình MTCNN
+
+# - Tải mô hình MTCNN (Multi-task Cascaded Convolutional Networks) để phát hiện khuôn mặt.
+
+#  8. Lấy tensor đầu vào và đầu ra
+
+# - Lấy các tensor cần thiết cho đầu vào (hình ảnh) và đầu ra (embedding khuôn mặt).
+
+#  9. Khởi tạo MTCNN
+
+# - Tạo các mạng MTCNN (P-Net, R-Net, O-Net) để phát hiện khuôn mặt.
+
+#  10. Đọc video và xử lý từng khung hình
+
+# - Mở video từ đường dẫn đã chỉ định và đọc từng khung hình. Dùng MTCNN để phát hiện khuôn mặt trong từng khung hình.
+
+#  11. Xử lý các khuôn mặt được phát hiện
+
+# - Nếu phát hiện được khuôn mặt, lấy bounding box và cắt khuôn mặt ra. Sau đó, thực hiện nhận diện bằng cách tính toán embedding và dự đoán lớp tương ứng.
+
+#  12. Hiển thị kết quả trên khung hình
+
+# - Nếu khuôn mặt được nhận diện với độ chính xác cao, hiển thị tên trên khung hình và vẽ khung bao quanh khuôn mặt.
+
+#  13. Lưu embedding vào cơ sở dữ liệu
+
+# - Nếu độ chính xác cao hơn 0.8, lưu embedding của khuôn mặt vào cơ sở dữ liệu thông qua hàm `save_embedding`.
+
+#  14. Hàm lưu embedding vào cơ sở dữ liệu
+
+# - Kết nối đến cơ sở dữ liệu MySQL, kiểm tra xem tên đã tồn tại chưa. Nếu chưa, lưu embedding vào bảng `students`.
+
+#  15. Kết thúc chương trình
+
+# - Giải phóng tài nguyên khi kết thúc, đóng webcam hoặc video.
+
+# Đoạn mã này tạo ra một hệ thống nhận diện khuôn mặt tự động, có khả năng phát hiện và nhận diện khuôn mặt từ video. Hệ thống sử dụng mô hình MTCNN để phát hiện khuôn mặt và mô hình Facenet để tạo ra các embedding khuôn mặt, từ đó so sánh và lưu trữ thông tin vào cơ sở dữ liệu MySQL.
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -97,7 +162,7 @@ def main():
                             feed_dict = {images_placeholder: scaled_reshape, phase_train_placeholder: False} # Chuẩn bị dữ liệu đầu vào cho mô hình
                             emb_array = sess.run(embeddings, feed_dict=feed_dict) # Chạy mô hình để tính toán embedding của khuôn mặt
                             
-                            # Dua vao model de classifier
+                            # Dua vao model SVM để phân loại
                             predictions = model.predict_proba(emb_array)
                             best_class_indices = np.argmax(predictions, axis=1)
                             best_class_probabilities = predictions[
@@ -117,11 +182,7 @@ def main():
                                 name = best_name
                                 print(f"Recognized: {name} with probability: {best_class_probabilities[0]}")
                                 
-                                # Lưu embedding vào cơ sở dữ liệu
-                                try:
-                                    save_embedding(name, emb_array)
-                                except Exception as e:
-                                    print(f"Error saving embedding for {name}: {e}")
+                                
                             else:
                                 name = "Unknown"
                                 print("Unknown face detected, not saving embedding.")
@@ -148,41 +209,5 @@ def main():
             cap.release()  # Nếu bạn sử dụng cv2.VideoCapture
             # cap.stop()  # Nếu bạn sử dụng imutils.VideoStream
             cv2.destroyAllWindows()
-
-def save_embedding(name, embedding):
-    try:
-        # Kết nối đến cơ sở dữ liệu MySQL
-        connection = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            # password='your_password',  # Thay thế bằng mật khẩu của bạn
-            database='face_recognition'
-        )
-        
-        cursor = connection.cursor()
-        
-        # Chuyển đổi embedding thành danh sách và sau đó thành chuỗi JSON
-        embedding_list = embedding.tolist()  # Chuyển đổi NumPy array thành danh sách
-        embedding_json = json.dumps(embedding_list)  # Chuyển đổi danh sách thành chuỗi JSON
-        
-        # Kiểm tra xem tên đã tồn tại trong cơ sở dữ liệu chưa
-        cursor.execute("SELECT COUNT(*) FROM students WHERE name = %s", (name,))
-        count = cursor.fetchone()[0]
-        
-        if count == 0:
-            # Lưu thông tin sinh viên và embedding vào cơ sở dữ liệu
-            cursor.execute("INSERT INTO students (name, embedding) VALUES (%s, %s)", (name, embedding_json))
-            print(f"Saved embedding for {name}.")
-        else:
-            print(f"Embedding for {name} already exists.")
-        
-        # Cam kết thay đổi
-        connection.commit()
-        
-    except mysql.connector.Error as err:
-        print("Error: {}".format(err))
-    finally:
-        cursor.close()
-        connection.close()
-
+            
 main()

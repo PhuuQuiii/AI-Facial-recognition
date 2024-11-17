@@ -1,25 +1,47 @@
-"""Performs face alignment and stores face thumbnails in the output directory."""
-# MIT License
-# 
-# Copyright (c) 2016 David Sandberg
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+
+# 2.     Hàm `main(args)`    :
+#    -     Bước chuẩn bị    :
+#      - Tạo thư mục lưu trữ ảnh đầu ra (`output_dir`) nếu nó chưa tồn tại.
+#      - Lưu thông tin về phiên bản mã nguồn (`src_path`) vào thư mục log.
+#      - Lấy dataset từ thư mục đầu vào (`args.input_dir`) chứa các ảnh chưa căn chỉnh.
+
+#    -     Tạo và nạp mô hình mạng    :
+#      - Tạo đồ thị TensorFlow và khởi tạo session.
+#      - Sử dụng `create_mtcnn()` để tạo 3 mạng con `P-Net`, `R-Net`, `O-Net` trong MTCNN.
+
+#    -     Thiết lập các thông số phát hiện khuôn mặt    :
+#      - `minsize`: Kích thước nhỏ nhất của khuôn mặt cần phát hiện.
+#      - `threshold`: Ngưỡng xác suất cho từng mạng (P-Net, R-Net, O-Net).
+#      - `factor`: Tỷ lệ thu nhỏ ảnh qua các bước.
+
+#    -     Căn chỉnh và lưu ảnh khuôn mặt    :
+#      - Lặp qua các lớp ảnh trong dataset và từng ảnh riêng lẻ.
+#      - Đọc ảnh và chuyển đổi sang RGB (nếu cần).
+#      - Phát hiện khuôn mặt và lấy bounding box.
+#      - Tùy chọn: nếu có nhiều khuôn mặt và `args.detect_multiple_faces` được bật, căn chỉnh từng khuôn mặt riêng lẻ.
+#      - Lưu bounding box và tọa độ của từng khuôn mặt đã căn chỉnh.
+
+# 3.     Hàm `parse_arguments(argv)`    :
+#    - Xử lý các tham số đầu vào từ dòng lệnh.
+#    - Các tham số chính gồm:
+#      - `input_dir`: Thư mục chứa ảnh gốc.
+#      - `output_dir`: Thư mục lưu ảnh đã căn chỉnh.
+#      - `image_size`: Kích thước của ảnh khuôn mặt đầu ra.
+#      - `margin`: Phần đệm xung quanh bounding box.
+#      - `random_order`: Chế độ ngẫu nhiên để cho phép xử lý đồng thời nhiều ảnh.
+#      - `gpu_memory_fraction`: Giới hạn bộ nhớ GPU cho quá trình.
+#      - `detect_multiple_faces`: Có căn chỉnh nhiều khuôn mặt trên một ảnh hay không.
+
+# 4.     Chạy chương trình    :
+#    - Chương trình được chạy từ dòng lệnh với các tham số cần thiết (`input_dir`, `output_dir`, `image_size`, `margin`, v.v.).
+#    - Gọi hàm `main()` để thực hiện quy trình căn chỉnh khuôn mặt.
+
+# Tổng kết
+
+# - Phát hiện và căn chỉnh khuôn mặt từ ảnh.
+# - Lưu ảnh khuôn mặt đã căn chỉnh vào thư mục đầu ra.
+# - Tạo log thông tin bounding box và các ảnh đầu ra.
+
 
 from __future__ import absolute_import
 from __future__ import division

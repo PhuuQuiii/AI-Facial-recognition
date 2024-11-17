@@ -1,26 +1,39 @@
-"""Training a face recognizer with TensorFlow using softmax cross entropy loss
-"""
-# MIT License
-# 
-# Copyright (c) 2016 David Sandberg
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+# File `train_softmax.py` là một script dùng để huấn luyện một mô hình nhận diện khuôn mặt bằng TensorFlow, sử dụng hàm mất mát softmax cross entropy. Dưới đây là phân tích chi tiết về nội dung của file này:
+
+# 1. Giới thiệu và Giấy phép:
+#    - File bắt đầu với một mô tả ngắn gọn về chức năng của nó và thông tin giấy phép MIT.
+
+# 2. Nhập khẩu Thư viện:
+#    - Các thư viện cần thiết được nhập khẩu, bao gồm TensorFlow, NumPy, và các mô-đun khác như `facenet` và `lfw` để xử lý dữ liệu khuôn mặt.
+
+# 3. Hàm `main(args)`:
+#    - Đây là hàm chính của chương trình, nơi mà quá trình huấn luyện được thực hiện.
+#    - Nó nhận các tham số từ dòng lệnh, thiết lập các thư mục cho log và mô hình, và chuẩn bị dữ liệu huấn luyện.
+#    - Dữ liệu được tải từ thư mục chỉ định và có thể được lọc dựa trên các tiêu chí nhất định.
+
+# 4. Xử lý Dữ liệu:
+#    - Dữ liệu được chia thành tập huấn luyện và tập xác thực (validation).
+#    - Các thông tin như số lượng lớp (classes) và số lượng ví dụ (examples) trong tập huấn luyện và xác thực được in ra.
+
+# 5. Xây dựng Mô hình:
+#    - Mô hình được xây dựng bằng cách sử dụng một mạng nơ-ron đã được định nghĩa trước (được chỉ định bởi `args.model_def`).
+#    - Các lớp đầu ra được tạo ra và hàm mất mát được tính toán.
+
+# 6. Huấn luyện Mô hình:
+#    - Một vòng lặp huấn luyện được thực hiện, trong đó mô hình được cập nhật dựa trên dữ liệu huấn luyện.
+#    - Các thông số như độ chính xác và hàm mất mát được theo dõi và ghi lại.
+
+# 7. Xác thực và Đánh giá:
+#    - Sau mỗi epoch, mô hình được xác thực trên tập xác thực và có thể được đánh giá trên tập dữ liệu LFW (Labeled Faces in the Wild).
+#    - Kết quả được ghi lại và có thể được sử dụng để phân tích hiệu suất của mô hình.
+
+# 8. Lưu Mô hình:
+#    - Cuối cùng, mô hình và các biến được lưu lại để có thể sử dụng trong tương lai.
+
+# 9. Các Hàm Hỗ trợ:
+#    - Các hàm khác như `find_threshold`, `filter_dataset`, `train`, `validate`, `evaluate`, và `save_variables_and_metagraph` được định nghĩa để hỗ trợ các chức năng cụ thể trong quá trình huấn luyện và đánh giá.
+
+# Tóm lại, file này là một phần quan trọng trong quy trình huấn luyện mô hình nhận diện khuôn mặt, bao gồm việc chuẩn bị dữ liệu, xây dựng mô hình, huấn luyện, xác thực và lưu trữ mô hình.
 
 from __future__ import absolute_import
 from __future__ import division

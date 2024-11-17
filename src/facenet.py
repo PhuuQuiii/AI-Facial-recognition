@@ -1,26 +1,62 @@
-"""Functions for building the face recognition network.
-"""
-# MIT License
-# 
-# Copyright (c) 2016 David Sandberg
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.p
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+
+# File `facenet.py` chứa các hàm và lớp cần thiết để xây dựng và huấn luyện mô hình nhận diện khuôn mặt dựa trên kiến trúc FaceNet. Mô hình này sử dụng các kỹ thuật học sâu để trích xuất đặc trưng khuôn mặt và tính toán độ tương đồng giữa các khuôn mặt.
+
+# 2. Hàm `triplet_loss`:
+#    - Tính toán hàm mất mát triplet, một phương pháp phổ biến trong nhận diện khuôn mặt. Hàm này so sánh khoảng cách giữa các embedding của các khuôn mặt khác nhau (anchor, positive, negative).
+   
+#    def triplet_loss(anchor, positive, negative, alpha):   
+   
+# 3. Hàm `center_loss`:
+#    - Tính toán hàm mất mát trung tâm, giúp cải thiện khả năng phân loại bằng cách tối ưu hóa khoảng cách giữa các embedding và trung tâm của lớp tương ứng.
+   
+#    def center_loss(features, label, alfa, nrof_classes):  
+   
+# 4. Hàm `get_image_paths_and_labels`:
+#    - Lấy danh sách các đường dẫn hình ảnh và nhãn từ tập dữ liệu.
+   
+#    def get_image_paths_and_labels(dataset):  
+  
+# 5. Hàm `shuffle_examples`:
+#    - Xáo trộn các ví dụ hình ảnh và nhãn để tăng tính ngẫu nhiên trong quá trình huấn luyện.
+   
+#    def shuffle_examples(image_paths, labels):      
+
+# 6. Hàm `random_rotate_image`:
+#    - Xoay ngẫu nhiên hình ảnh trong một khoảng nhất định để tăng cường dữ liệu.
+   
+#    def random_rotate_image(image):    
+
+# 7. Hàm `create_input_pipeline`:
+#    - Tạo pipeline đầu vào cho mô hình, bao gồm việc đọc hình ảnh, áp dụng các phép biến đổi ngẫu nhiên và chuẩn hóa hình ảnh.
+   
+#    def create_input_pipeline(input_queue, image_size, nrof_preprocess_threads, batch_size_placeholder):
+
+# 8. Hàm `get_control_flag`:
+#    - Kiểm tra các cờ điều khiển để xác định các phép biến đổi nào sẽ được áp dụng cho hình ảnh.
+   
+#    def get_control_flag(control, field): 
+
+# 9. Hàm `_add_loss_summaries`:
+#    - Thêm các tóm tắt cho các hàm mất mát để theo dõi hiệu suất của mô hình trong quá trình huấn luyện.
+   
+#    def _add_loss_summaries(total_loss):     
+   
+# 10. Hàm `train`:
+#     - Huấn luyện mô hình bằng cách tính toán gradient và cập nhật trọng số của mô hình.
+    
+#     def train(total_loss, global_step, optimizer, learning_rate, moving_average_decay, update_gradient_vars, log_histograms=True):   
+    
+# 11. Hàm `prewhiten`:
+#     - Tiền xử lý hình ảnh bằng cách chuẩn hóa để có trung bình bằng 0 và độ lệch chuẩn bằng 1.
+    
+#     def prewhiten(x)    
+    
+# 12. Hàm `crop`:
+#     - Cắt hình ảnh ngẫu nhiên để tạo ra các mẫu hình ảnh có kích thước cố định.
+    
+#     def crop(image, random_crop, image_size):
+        
+# File `facenet.py` là một phần quan trọng trong quy trình xây dựng mô hình nhận diện khuôn mặt. Nó cung cấp các hàm cần thiết để tính toán hàm mất mát, xử lý dữ liệu đầu vào, và huấn luyện mô hình. Việc sử dụng các kỹ thuật như triplet loss và center loss giúp cải thiện độ chính xác của mô hình trong việc nhận diện và phân loại khuôn mặt.
 
 # pylint: disable=missing-docstring
 from __future__ import absolute_import
@@ -408,11 +444,11 @@ def get_model_filenames(model_dir):
   
 def distance(embeddings1, embeddings2, distance_metric=0):
     if distance_metric==0:
-        # Euclidian distance
+        # Tính khoảng cách Euclidean
         diff = np.subtract(embeddings1, embeddings2)
         dist = np.sum(np.square(diff),1)
     elif distance_metric==1:
-        # Distance based on cosine similarity
+        # Tính khoảng cách dựa trên độ tương đồng cosine
         dot = np.sum(np.multiply(embeddings1, embeddings2), axis=1)
         norm = np.linalg.norm(embeddings1, axis=1) * np.linalg.norm(embeddings2, axis=1)
         similarity = dot / norm

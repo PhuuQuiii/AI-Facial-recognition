@@ -83,6 +83,7 @@
       <h1>Hệ thống điểm danh VAA</h1>
       <p>Vui lòng chọn loại tài khoản dùng để đăng nhập</p>
       <button id="teacherLoginButton">Đăng nhập trang giáo viên</button>
+      <button id="studentInfoButton">Cung cấp thông tin điểm danh</button>
     </div>
 
     <script>
@@ -90,6 +91,12 @@
         .getElementById("teacherLoginButton")
         .addEventListener("click", function () {
           window.location.href = "/login_teacher";
+        });
+
+      document
+        .getElementById("studentInfoButton")
+        .addEventListener("click", function () {
+          window.location.href = "/student";
         });
     </script>
   </body>
