@@ -272,11 +272,6 @@ p {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-h2 {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
 .options {
     display: flex;
     justify-content: space-between;
@@ -297,11 +292,13 @@ h2 {
 }
 
 .class-box {
-    background-color: #e3f2fd;
-    border: 1px solid #90caf9;
-    padding: 10px;
+    background-color: #e7ecf0;
+    border: 1px solid #c9d0db;
+     padding: 10px;
     border-radius: 5px;
     font-size: 14px;
+   color: #003763;
+   font-weight: normal;
 }
 
 .legend {
@@ -319,8 +316,104 @@ h2 {
     margin-right: 10px;
 }
 
-.legend-item.theory { background: #cfd8dc; }
-.legend-item.practice { background: #8bc34a; }
-.legend-item.online { background: #29b6f6; }
-.legend-item.exam { background: #fdd835; }
-.legend-item.pause { background: #e57373; }
+.options {
+    display: flex;
+    justify-content: center; 
+    gap: 10px; 
+    width: 100%; 
+   
+}
+
+
+.btn_sd {
+    background-color: #1da1f2;
+    color:#fff;
+    padding: 5px 10px;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+}
+
+.date-input {
+    padding: 5px;
+    font-size: 14px;
+}
+
+.tr_sd{
+    background-color: #f2f2f2;
+    border: 1px solid #ddd;
+    color:#1da1f2;
+}
+
+.td_ca{
+    background-color: #ffffce;
+    color:#667580;
+    border: 1px solid #ddd;
+}
+
+.title_sd{
+    color:#667580;
+    float:left;
+}
+/* Header Styles */
+
+.header_sd {
+    display: flex; 
+    text-align: center; 
+    justify-content: center;
+    margin: 10px 10px; 
+    align-items: center; gap:20px;
+    background-color: hsl(213, 85%, 97%);
+    border-radius: 5px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  
+  .header_sd h1 {
+    margin: 0;
+    font-size: 24px;
+  }
+  
+  .header_sd h2 {
+    margin: 0;
+    font-size: 18px;
+  }
+  
+  .header-left{
+    margin-left:45%;
+    float:left;
+  }
+
+  .header-right{
+    
+    float:right;
+  }
+
+  /* Logout Button */
+  .logout-button {
+    margin-left:95%;
+    float:right;
+    background-color: #1da1f2;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .logout-button:hover {
+    background-color: #939598;
+  }
+  
+  .logout-icon {
+    width: 24px;
+    height: 24px;
+    fill: white;
+  }
+  
+  

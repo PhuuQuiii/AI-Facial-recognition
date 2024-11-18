@@ -9,54 +9,38 @@
 </head>
 
 <body>
-  <header>
-    <h1 id="studentName">Tên Sinh Viên</h1>
-    <div style="display: flex; gap: 20px">
-        <h2>MSSV <span id="className">Mã số sinh viên</span></h2>
+  <header class="header_sd">
+  <div style="width:100%;">
+    <div class="header-left">
+      <h1 id="studentName">Tên Sinh Viên</h1>
+      <h2>MSSV <span id="className">Mã số sinh viên</span></h2>
     </div>
+    <div class="header-right">
+      <button style="float:right;" class="logout-button">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="logout-icon">
+          <path fill="white" d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5V3zm4.59 4.41L13.17 9H20v2h-6.83l1.42 1.59L14 14l-4-4 4-4 1.59 1.41z" />
+        </svg>
+      </button>
+    </div>
+  </div>
   </header>
+  
+  
 
   <div class="container">
-    <div class="side-nav">
-      <ul>
-        <li>
-          <input type="checkbox" id="tags-toggle" onclick="toggleDropdown(event)">
-          <label for="tags-toggle">Lớp</label>
-          <ul id="class" class="dropdown">
-              <li>
-                <label for="class" onclick=""> 010100087204 - Lập trình Python </label>
-              </li>
-              <li>
-                <label for="class" onclick=""> 010100085003 - Phân tích và thiết kế thuật giải </label>
-              </li>
-              <li>
-                <label for="class" onclick=""> IDClass -  NameClass </label>
-              </li>
-          </ul>
-        </li>
-        <li><a href="#">Đăng xuất</a></li>
-      </ul>
-    </div>
-    <div class="main-content">
-        <div>
-            <select id="week">
-              <option>Tuần 1</option>
-              <option>Tuần 1</option>
-              <option>Tuần 1</option>
-            </select>
-        </div>
+    <div style="width:100%;" class="main-content">
         <div class="schedule-container">
-            <h2>Lịch học, lịch thi theo tuần</h2>
+            <h2 class="title_sd"><b>Lịch học, lịch thi theo tuần<b></h2>
             <div class="options">
-                <button> < Trở về</button>
-                <input type="date" value="2024-11-17">
-                <button>Tiếp ></button>
-            </div>
+              <button class="btn_sd"> < Trở về</button>
+              <input type="date" value="2024-11-17" class="date-input">
+              <button class="btn_sd">Tiếp ></button>
+          </div>
             <table class="schedule-table">
                 <thead>
-                    <tr>
-                        <th>Ca học</th>
-                        <th>Thứ 2<br>11/11/2024</th>
+                    <tr class="tr_sd">
+                        <th >Ca học</th>
+                        <th >Thứ 2<br>11/11/2024</th>
                         <th>Thứ 3<br>12/11/2024</th>
                         <th>Thứ 4<br>13/11/2024</th>
                         <th>Thứ 5<br>14/11/2024</th>
@@ -67,7 +51,7 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Sáng</td>
+                        <td class="td_ca"><b>Sáng</b></td>
                         <td>
                             <div class="class-box">
                                 <strong>Lập trình Web</strong><br>
@@ -86,7 +70,7 @@
                         <td></td>
                     </tr>
                     <tr>
-                        <td>Chiều</td>
+                        <td class="td_ca"><b>Chiều</b></td>
                         <td>
                             <div class="class-box">
                                 <strong>Hệ điều hành</strong><br>
@@ -105,7 +89,7 @@
                         <td></td>
                     </tr>
                     <tr>
-                        <td>Tối</td>
+                        <td class="td_ca"><b>Tối</b></td>
                         <td></td>
                         <td></td>
                         <td></td>
@@ -116,13 +100,7 @@
                     </tr>
                 </tbody>
             </table>
-            <div class="legend">
-                <span class="legend-item theory">Lịch học lý thuyết</span>
-                <span class="legend-item practice">Lịch học thực hành</span>
-                <span class="legend-item online">Lịch học trực tuyến</span>
-                <span class="legend-item exam">Lịch thi</span>
-                <span class="legend-item pause">Lịch tạm ngưng</span>
-            </div>
+           
         </div>
         </div>
     </div>
@@ -177,172 +155,172 @@
         });
     }
 
-    function updateStatus(status) {
-              // Bạn có thể sử dụng status (attendance/absent) để thay đổi trạng thái
-              const newStatus = status;
-              updateAttendance(student.MSSV, newStatus, student.class_id);
-    }
-    const socket = io();
-    const teacherInfo = JSON.parse(sessionStorage.getItem("teacherInfo"));
-    console.log("Teacher Info:", teacherInfo); // Kiểm tra thông tin giáo viên
+    // function updateStatus(status) {
+    //           // Bạn có thể sử dụng status (attendance/absent) để thay đổi trạng thái
+    //           const newStatus = status;
+    //           updateAttendance(student.MSSV, newStatus, student.class_id);
+    // }
+    // const socket = io();
+    // const teacherInfo = JSON.parse(sessionStorage.getItem("teacherInfo"));
+    // console.log("Teacher Info:", teacherInfo); // Kiểm tra thông tin giáo viên
 
-    if (teacherInfo && teacherInfo.teacher_id) {
-      document.getElementById("studentName").innerText = teacherInfo.name;
-      document.getElementById("className").innerText = "";
-      loadClasses(teacherInfo.teacher_id);
-    } else {
-      console.error(
-        "Teacher ID is undefined or teacherInfo is not available."
-      );
-    }
+    // if (teacherInfo && teacherInfo.teacher_id) {
+    //   document.getElementById("studentName").innerText = teacherInfo.name;
+    //   document.getElementById("className").innerText = "";
+    //   loadClasses(teacherInfo.teacher_id);
+    // } else {
+    //   console.error(
+    //     "Teacher ID is undefined or teacherInfo is not available."
+    //   );
+    // }
 
-    function loadClasses(teacherId) {
-      fetch(`/get_classes?teacher_id=${teacherId}`)
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Classes data:", data);
-          const classList = document.getElementById("class");
-          console.log(classList);
-          classList.innerHTML = "";
-          data.classes.forEach((i) => {
-            const listItem = document.createElement('li');
+    // function loadClasses(teacherId) {
+    //   fetch(`/get_classes?teacher_id=${teacherId}`)
+    //     .then((response) => response.json())
+    //     .then((data) => {
+    //       console.log("Classes data:", data);
+    //       const classList = document.getElementById("class");
+    //       console.log(classList);
+    //       classList.innerHTML = "";
+    //       data.classes.forEach((i) => {
+    //         const listItem = document.createElement('li');
         
-            // Tạo phần tử label và thêm vào listItem
-            const label = document.createElement('label');
-            label.setAttribute('for', 'class');
-            label.innerText = `${i.id_class} - ${i.name}`;
+    //         // Tạo phần tử label và thêm vào listItem
+    //         const label = document.createElement('label');
+    //         label.setAttribute('for', 'class');
+    //         label.innerText = `${i.id_class} - ${i.name}`;
 
 
-            label.onclick = () => {
-              loadStudents(i.id_class);
-              document.getElementById("className").innerText = i.name; // Cập nhật tên lớp trên header
-              document.getElementById("classRoom").innerText = i.room; // Hiển thị table điểm danh
-            };
-            // Gắn label vào listItem
-            listItem.appendChild(label);
+    //         label.onclick = () => {
+    //           loadStudents(i.id_class);
+    //           document.getElementById("className").innerText = i.name; // Cập nhật tên lớp trên header
+    //           document.getElementById("classRoom").innerText = i.room; // Hiển thị table điểm danh
+    //         };
+    //         // Gắn label vào listItem
+    //         listItem.appendChild(label);
 
-            // Thêm listItem vào classList
-            classList.appendChild(listItem);
-          });
-        });
-    }
+    //         // Thêm listItem vào classList
+    //         classList.appendChild(listItem);
+    //       });
+    //     });
+    // }
 
-    function loadStudents(classId) {
-      fetch(`/get_students?class_id=${classId}`)
-        .then((response) => response.json())
-        .then((data) => {
-          console.log(data);
-          const studentTableBody = document
-            .getElementById("liststudent")
-            .getElementsByTagName("tbody")[0];
-          studentTableBody.innerHTML = ""; // Clear previous data
-          data.students.forEach((student) => {
-            const row = studentTableBody.insertRow();
-            row.insertCell(0).innerText = student.MSSV;
-            row.insertCell(1).innerText = student.name;
+    // function loadStudents(classId) {
+    //   fetch(`/get_students?class_id=${classId}`)
+    //     .then((response) => response.json())
+    //     .then((data) => {
+    //       console.log(data);
+    //       const studentTableBody = document
+    //         .getElementById("liststudent")
+    //         .getElementsByTagName("tbody")[0];
+    //       studentTableBody.innerHTML = ""; // Clear previous data
+    //       data.students.forEach((student) => {
+    //         const row = studentTableBody.insertRow();
+    //         row.insertCell(0).innerText = student.MSSV;
+    //         row.insertCell(1).innerText = student.name;
 
-            if (student.status == "Absent"){
-                row.insertCell(2).innerHTML = '<i class="icon-cancel"></i>';
-            } else {
-              row.insertCell(2).innerHTML = '<i class="icon-tick"></i>';
-            }
+    //         if (student.status == "Absent"){
+    //             row.insertCell(2).innerHTML = '<i class="icon-cancel"></i>';
+    //         } else {
+    //           row.insertCell(2).innerHTML = '<i class="icon-tick"></i>';
+    //         }
 
-            // Thêm nút cập nhật
-            const actionCell = row.insertCell(3);
-            const updateButton = document.createElement('div');
-            updateButton.style.position = 'relative';
-            updateButton.style.display = 'inline-flex';
-            updateButton.style.alignItems = 'center';
-            updateButton.innerHTML = `                              
-                              <i class="icon-edit" onclick="toggleAttendanceMenu(this)"></i>
-                              <div class="attendance-menu" style="display: none;">
-                                <ul>
-                                  <li value="attendance" onclick="updateStatus('attendance')">Điểm danh</li>
-                                  <li value="absent" onclick="updateStatus('absent')">Chưa điểm danh</li>
-                                </ul>
-                              </div>
+    //         // Thêm nút cập nhật
+    //         const actionCell = row.insertCell(3);
+    //         const updateButton = document.createElement('div');
+    //         updateButton.style.position = 'relative';
+    //         updateButton.style.display = 'inline-flex';
+    //         updateButton.style.alignItems = 'center';
+    //         updateButton.innerHTML = `                              
+    //                           <i class="icon-edit" onclick="toggleAttendanceMenu(this)"></i>
+    //                           <div class="attendance-menu" style="display: none;">
+    //                             <ul>
+    //                               <li value="attendance" onclick="updateStatus('attendance')">Điểm danh</li>
+    //                               <li value="absent" onclick="updateStatus('absent')">Chưa điểm danh</li>
+    //                             </ul>
+    //                           </div>
             
-            `;
+    //         `;
 
-            actionCell.appendChild(updateButton);
-          });
-        });
-    }
+    //         actionCell.appendChild(updateButton);
+    //       });
+    //     });
+    // }
 
-    function updateAttendance(mssv, status, classId) {
-      const date = new Date().toISOString().split("T")[0];
+    // function updateAttendance(mssv, status, classId) {
+    //   const date = new Date().toISOString().split("T")[0];
 
-      // Kiểm tra xem có bản ghi nào đã tồn tại không
-      fetch(`/check_attendance?student_id=${mssv}&date=${date}`)
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.exists) {
-            // Nếu bản ghi tồn tại, xóa nó trước khi thêm bản ghi mới
-            fetch("/delete_attendance", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                MSSV: mssv,
-                date: date,
-              }),
-            })
-              .then((response) => response.json())
-              .then((deleteData) => {
-                if (deleteData.success) {
-                  console.log("Old attendance record deleted successfully.");
-                  addNewAttendance(mssv, status, classId, date);
-                } else {
-                  console.error("Error deleting old attendance record.");
-                }
-              });
-          } else {
-            // Nếu không có bản ghi nào, thêm mới
-            addNewAttendance(mssv, status, classId, date);
-          }
-        });
-    }
+    //   // Kiểm tra xem có bản ghi nào đã tồn tại không
+    //   fetch(`/check_attendance?student_id=${mssv}&date=${date}`)
+    //     .then((response) => response.json())
+    //     .then((data) => {
+    //       if (data.exists) {
+    //         // Nếu bản ghi tồn tại, xóa nó trước khi thêm bản ghi mới
+    //         fetch("/delete_attendance", {
+    //           method: "POST",
+    //           headers: {
+    //             "Content-Type": "application/json",
+    //           },
+    //           body: JSON.stringify({
+    //             MSSV: mssv,
+    //             date: date,
+    //           }),
+    //         })
+    //           .then((response) => response.json())
+    //           .then((deleteData) => {
+    //             if (deleteData.success) {
+    //               console.log("Old attendance record deleted successfully.");
+    //               addNewAttendance(mssv, status, classId, date);
+    //             } else {
+    //               console.error("Error deleting old attendance record.");
+    //             }
+    //           });
+    //       } else {
+    //         // Nếu không có bản ghi nào, thêm mới
+    //         addNewAttendance(mssv, status, classId, date);
+    //       }
+    //     });
+    // }
 
-    function addNewAttendance(mssv, status, classId, date) {
-      fetch("/update_attendance", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          MSSV: mssv,
-          date: date,
-          status: status,
-          class_id: classId,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            console.log("Attendance updated successfully");
-          } else {
-            console.error("Error updating attendance");
-          }
-        });
-    }
+    // function addNewAttendance(mssv, status, classId, date) {
+    //   fetch("/update_attendance", {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify({
+    //       MSSV: mssv,
+    //       date: date,
+    //       status: status,
+    //       class_id: classId,
+    //     }),
+    //   })
+    //     .then((response) => response.json())
+    //     .then((data) => {
+    //       if (data.success) {
+    //         console.log("Attendance updated successfully");
+    //       } else {
+    //         console.error("Error updating attendance");
+    //       }
+    //     });
+    // }
 
-    socket.on("response", function (data) {
-      if (data.message) {
-        showNotification(data.message);
-      }
-    });
+    // socket.on("response", function (data) {
+    //   if (data.message) {
+    //     showNotification(data.message);
+    //   }
+    // });
 
-    function showNotification(message) {
-      const notification = document.createElement("div");
-      notification.className = "notification";
-      notification.innerText = message;
-      document.body.appendChild(notification);
+    // function showNotification(message) {
+    //   const notification = document.createElement("div");
+    //   notification.className = "notification";
+    //   notification.innerText = message;
+    //   document.body.appendChild(notification);
 
-      setTimeout(() => {
-        notification.remove();
-      }, 5000); // Thời gian hiển thị 5 giây
-    }
+    //   setTimeout(() => {
+    //     notification.remove();
+    //   }, 5000); // Thời gian hiển thị 5 giây
+    // }
   </script>
 </body>
 
