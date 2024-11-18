@@ -84,6 +84,7 @@
       <p>Vui lòng chọn loại tài khoản dùng để đăng nhập</p>
       <button id="teacherLoginButton">Đăng nhập trang giáo viên</button>
       <button id="studentInfoButton">Cung cấp thông tin điểm danh</button>
+      <button id="studentLoginButton">Đăng nhập trang sinh viên</button>
     </div>
 
     <script>
@@ -95,6 +96,12 @@
 
       document
         .getElementById("studentInfoButton")
+        .addEventListener("click", function () {
+          window.location.href = "/student";
+        });
+
+      document
+        .getElementById("studentLoginButton")
         .addEventListener("click", function () {
           window.location.href = "/login_student";
         });

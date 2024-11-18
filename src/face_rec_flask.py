@@ -31,26 +31,31 @@ facenet.load_model('../Models/20180402-114759.pb')
 @app.route('/')
 def home():
     return render_template('index.html')
-@app.route('/student', methods=['GET', 'POST'])
-def student():
+@app.route('/login_student', methods=['GET', 'POST'])
+def login_student():
     if request.method == 'POST':
         data = request.get_json()
-        student_id = data['studentid']
+        student_id = data['studentId']
         password = data['password']
+
+        print(student_id, password)
 
         # Kết nối đến cơ sở dữ liệu
         connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
         cursor = connection.cursor()
 
         # Truy vấn thông tin sinh viên
-        cursor.execute("SELECT * FROM student WHERE MSSV = %s", (student_id,))
+        cursor.execute("SELECT * FROM Student WHERE MSSV = %s", (student_id,))
         student = cursor.fetchone()
 
         if student:
             # Kiểm tra mật khẩu
-            if student[2] == password:  # So sánh với trường password
-                session['student_id'] = student[0]  # MSSV
-                session['student_name'] = student[1]  # Tên sinh viên
+            if student[2] == password:  
+                session['student_id'] = student[0]  
+                session['student_name'] = student[1] 
+
+                return jsonify({"success": True, "name": student[1]})
+
         return jsonify({"success": False, "message": "Mã số sinh viên hoặc mật khẩu không đúng."})
 
     return render_template('login_student.html')

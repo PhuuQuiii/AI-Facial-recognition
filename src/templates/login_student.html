@@ -91,7 +91,7 @@
       <h1>Đăng nhập sinh viên</h1>
       <input
         type="text"
-        id="studentid"
+        id="studentId"
         placeholder="Mã số sinh viên"
         required
       />
@@ -105,7 +105,7 @@
         .getElementById("loginForm")
         .addEventListener("submit", function (event) {
           event.preventDefault();
-          const studentid = document.getElementById("studentid").value;
+          const studentId = document.getElementById("studentId").value;
           const password = document.getElementById("password").value;
 
           fetch("/login_student", {
@@ -113,20 +113,28 @@
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ studentid, password }),
+            body: JSON.stringify({ studentId, password }),
           })
-            .then((response) => response.json())
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error('Network response was not ok');
+              }
+              return response.json();
+            })
             .then((data) => {
               console.log(data);
               if (data.success) {
                 sessionStorage.setItem(
                   "studentInfo",
-                  JSON.stringify({student_id: studentid, name: data.name, class: data.class })
+                  JSON.stringify({student_id: studentId, name: data.name })
                 );
                 window.location.href = "/student_dashboard"; // Đảm bảo đường dẫn đúng
               } else {
                 document.getElementById("message").innerText = data.message;
               }
+            })
+            .catch((error) => {
+              document.getElementById("message").innerText = "Đã xảy ra lỗi: " + error.message;
             });
         });
     </script>
