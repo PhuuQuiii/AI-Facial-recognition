@@ -305,5 +305,15 @@ def train_model():
         print(f"Error during training: {e}")
         return jsonify({"success": False, "message": str(e)})
 
+@app.route('/open_camera')
+def open_camera():
+    try:
+        # Chạy lệnh mở camera
+        subprocess.Popen(['python', 'face_rec_cam.py'])
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"Error opening camera: {e}")
+        return jsonify({"success": False, "message": str(e)})
+
 if __name__ == '__main__':
     socketio.run(app, debug=True)

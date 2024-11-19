@@ -66,9 +66,9 @@ def main():
     FACTOR = 0.709
     IMAGE_SIZE = 182
     INPUT_IMAGE_SIZE = 160
-    CLASSIFIER_PATH = 'Models/facemodel.pkl'
+    CLASSIFIER_PATH = '../Models/facemodel.pkl'
     VIDEO_PATH = args.path
-    FACENET_MODEL_PATH = 'Models/20180402-114759.pb'
+    FACENET_MODEL_PATH = '../Models/20180402-114759.pb'
 
     # Load The Custom Classifier
     with open(CLASSIFIER_PATH, 'rb') as file:
@@ -91,7 +91,7 @@ def main():
             phase_train_placeholder = tf.compat.v1.get_default_graph().get_tensor_by_name("phase_train:0")
             embedding_size = embeddings.get_shape()[1]
 
-            pnet, rnet, onet = align.detect_face.create_mtcnn(sess, "src/align")
+            pnet, rnet, onet = align.detect_face.create_mtcnn(sess, "../src/align")
 
             people_detected = set()
             person_detected = collections.Counter()
