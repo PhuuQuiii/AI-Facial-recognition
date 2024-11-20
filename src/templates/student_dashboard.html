@@ -12,10 +12,10 @@
       <div style="width: 100%">
         <div class="header-left">
           <h1 id="studentName">Tên Sinh Viên</h1>
-          <h2>MSSV <span id="className">Mã số sinh viên</span></h2>
+          <h2 id="MSSV"> Mã số sinh viên</h2>
         </div>
         <div class="header-right">
-          <button style="float: right" class="logout-button">
+          <button style="float: right" id="logout-button">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -37,20 +37,20 @@
           <h2 class="title_sd"><b>Lịch học, lịch thi theo tuần</b></h2>
           <div class="options">
             <button class="btn_sd">< Trở về</button>
-            <input type="date" value="2024-11-17" class="date-input" />
+            <input type="date" class="date-input" />
             <button class="btn_sd">Tiếp ></button>
           </div>
           <table class="schedule-table">
             <thead>
               <tr class="tr_sd">
                 <th>Ca học</th>
-                <th>Thứ 2<br />11/11/2024</th>
-                <th>Thứ 3<br />12/11/2024</th>
-                <th>Thứ 4<br />13/11/2024</th>
-                <th>Thứ 5<br />14/11/2024</th>
-                <th>Thứ 6<br />15/11/2024</th>
-                <th>Thứ 7<br />16/11/2024</th>
-                <th>Chủ nhật<br />17/11/2024</th>
+                <th>Thứ 2<br/></th>
+                <th>Thứ 3<br/></th>
+                <th>Thứ 4<br/></th>
+                <th>Thứ 5<br/></th>
+                <th>Thứ 6<br/></th>
+                <th>Thứ 7<br/></th>
+                <th>Chủ nhật<br/></th>
               </tr>
             </thead>
             <tbody>
@@ -117,12 +117,10 @@
                 <td class="td_ca"><b>Tối</b></td>
                 <td>
                   <div class="class-box">
-                    <strong>Hệ điều hành</strong><br />
-                    23DHTT01 - 010100039501<br />
-                    Tiết: 6 - 9<br />
-                    Giờ: 12:00 - 15:35<br />
-                    Phòng: G601<br />
-                    GV: Huỳnh Thanh Sơn
+                    <strong><p id="monhoc">Môn</p></strong><br/>
+                    <p id="lophoc">Lớp</p><br/>
+                    <p id="phonghoc">Phòng</p><br/>
+                    <p id="gv">GV</p><br/>
                   </div>
                 </td>
                 <td></td>
@@ -210,6 +208,117 @@
           video.remove(); // Xóa video khỏi DOM
         }
       }
+// hiện tên và mssv
+      const studentInfo = JSON.parse(sessionStorage.getItem("studentInfo"));
+    console.log("student Info:", studentInfo); // Kiểm tra thông tin sinh viên
+
+    if (studentInfo && studentInfo.student_id ) {
+      document.getElementById("studentName").innerText = studentInfo.name;
+      document.getElementById("MSSV").innerText = studentInfo.student_id;
+    } else {
+      console.error(
+        "Student ID is undefined or teacherInfo is not available."
+      );
+    }
+
+// đăng xuất 
+document
+  .getElementById("logout-button")
+  .addEventListener("click", function () {
+    sessionStorage.removeItem("studentInfo");
+    window.location.href = "../";
+  });
+
+
+
+// ngày 
+document.addEventListener("DOMContentLoaded", function () {
+  const dateInput = document.querySelector(".date-input");
+  const btnPrev = document.querySelector(".btn_sd:first-child"); 
+  const btnNext = document.querySelector(".btn_sd:last-child"); 
+
+  // Khởi tạo ngày hiện tại
+  const today = new Date();
+  dateInput.value = formatDateForInput(today);
+
+  // Cập nhật lịch khi vào trang
+  updateSchedule(new Date(dateInput.value));
+
+  // Gắn sự kiện cho nút "Trở về"
+  btnPrev.addEventListener("click", function () {
+    adjustWeek(-7); // Lùi 1 tuần
+  });
+
+  // Gắn sự kiện cho nút "Tiếp"
+  btnNext.addEventListener("click", function () {
+    adjustWeek(7); // Tăng 1 tuần
+  });
+
+  // Hàm điều chỉnh tuần
+  function adjustWeek(days) {
+    const currentDate = new Date(dateInput.value); // Ngày hiện tại trong input
+    currentDate.setDate(currentDate.getDate() + days); // Điều chỉnh số ngày
+    dateInput.value = formatDateForInput(currentDate); // Cập nhật giá trị input
+    updateSchedule(currentDate); // Cập nhật bảng lịch
+  }
+
+  // Hàm định dạng ngày cho input (YYYY-MM-DD)
+  function formatDateForInput(date) {
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${year}-${month}-${day}`;
+  }
+
+dateInput.addEventListener("change", function () {
+  const selectedDate = new Date(this.value);
+  if (isNaN(selectedDate)) {
+    console.error("Ngày không hợp lệ:", this.value);
+    return;
+  }
+  updateSchedule(selectedDate);
+});
+
+
+  // Hàm định dạng ngày cho bảng (DD-MM-YYYY)
+  function formatDateForTable(date) {
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  function updateSchedule(baseDate) {
+  if (isNaN(baseDate)) {
+    console.error("Ngày không hợp lệ:", baseDate);
+    return;
+  }
+
+  const dayOfWeek = baseDate.getDay(); // Lấy thứ (0: CN, 6: T7)
+  const startOfWeek = new Date(baseDate);
+
+  // Tính ngày Thứ 2 đầu tuần
+  startOfWeek.setDate(baseDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+
+  // Lấy các tiêu đề của bảng
+  const headers = document.querySelectorAll(".schedule-table thead th");
+
+  if (headers.length < 8) {
+    console.error("Cấu trúc bảng lịch không đủ cột tiêu đề");
+    return;
+  }
+
+  // Cập nhật nội dung các ô tiêu đề
+  for (let i = 1; i <= 7; i++) {
+    const currentDay = new Date(startOfWeek);
+    currentDay.setDate(startOfWeek.getDate() + (i - 1));
+    headers[i].innerHTML = `Thứ ${i + 1}<br>${formatDateForTable(currentDay)}`;
+  }
+}
+
+});
+
+
     </script>
   </body>
 </html>

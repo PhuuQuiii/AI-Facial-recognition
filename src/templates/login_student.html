@@ -126,7 +126,7 @@
               if (data.success) {
                 sessionStorage.setItem(
                   "studentInfo",
-                  JSON.stringify({student_id: studentId, name: data.name })
+                  JSON.stringify({student_id: studentId , name: data.name })
                 );
                 window.location.href = "/student_dashboard"; // Đảm bảo đường dẫn đúng
               } else {

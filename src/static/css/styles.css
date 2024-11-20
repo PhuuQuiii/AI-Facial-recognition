@@ -408,7 +408,7 @@ p {
   }
 
   /* Logout Button */
-  .logout-button {
+  #logout-button {
     margin-left:95%;
     float:right;
     background-color: #1da1f2;
@@ -422,7 +422,7 @@ p {
     align-items: center;
   }
   
-  .logout-button:hover {
+  #logout-button:hover {
     background-color: #939598;
   }
   

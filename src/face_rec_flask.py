@@ -69,7 +69,7 @@ def login_student():
         return jsonify({"success": False, "message": "Mã số sinh viên hoặc mật khẩu không đúng."})
 
     return render_template('login_student.html')
-# Route cho trang dashboard giáo viên
+# Route cho trang dashboard sinh viên
 @app.route('/student_dashboard') 
 def student_dashboard():
     return render_template('student_dashboard.html')
