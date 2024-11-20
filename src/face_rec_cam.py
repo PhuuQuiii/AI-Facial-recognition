@@ -98,10 +98,12 @@ def main():
             cap = VideoStream(src=0).start()
 
             while True:
+                # Lấy dữ liệu từ camera
                 frame = cap.read()
                 frame = imutils.resize(frame, width=600)
                 frame = cv2.flip(frame, 1)
 
+                #  Phát hiện khuôn mặt
                 bounding_boxes, _ = align.detect_face.detect_face(frame, MINSIZE, pnet, rnet, onet, THRESHOLD, FACTOR)
 
                 faces_found = bounding_boxes.shape[0]
@@ -121,14 +123,18 @@ def main():
                             print(frame.shape[0])
                             print((bb[i][3]-bb[i][1])/frame.shape[0])
                             if (bb[i][3]-bb[i][1])/frame.shape[0]>0.25:
+                                # Cắt và tiền xử lý khuôn mặt
                                 cropped = frame[bb[i][1]:bb[i][3], bb[i][0]:bb[i][2], :]
                                 scaled = cv2.resize(cropped, (INPUT_IMAGE_SIZE, INPUT_IMAGE_SIZE),
                                                     interpolation=cv2.INTER_CUBIC)
                                 scaled = facenet.prewhiten(scaled)
                                 scaled_reshape = scaled.reshape(-1, INPUT_IMAGE_SIZE, INPUT_IMAGE_SIZE, 3)
+
+                                #Trích xuất đặc trưng khuôn mặt
                                 feed_dict = {images_placeholder: scaled_reshape, phase_train_placeholder: False}
                                 emb_array = sess.run(embeddings, feed_dict=feed_dict)
 
+                                # Nhận diện khuôn mặt(Dùng mô hình SVM để phân loại)
                                 predictions = model.predict_proba(emb_array)
                                 best_class_indices = np.argmax(predictions, axis=1)
                                 best_class_probabilities = predictions[np.arange(len(best_class_indices)), best_class_indices]

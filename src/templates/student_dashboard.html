@@ -1,186 +1,215 @@
 <!DOCTYPE html>
 <html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="../static/css/styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Dashboard</title>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <link rel="stylesheet" href="../static/css/styles.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Student Dashboard</title>
-</head>
+  <body>
+    <header class="header_sd">
+      <div style="width: 100%">
+        <div class="header-left">
+          <h1 id="studentName">Tên Sinh Viên</h1>
+          <h2>MSSV <span id="className">Mã số sinh viên</span></h2>
+        </div>
+        <div class="header-right">
+          <button style="float: right" class="logout-button">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              class="logout-icon"
+            >
+              <path
+                fill="white"
+                d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5V3zm4.59 4.41L13.17 9H20v2h-6.83l1.42 1.59L14 14l-4-4 4-4 1.59 1.41z"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
 
-<body>
-  <header class="header_sd">
-  <div style="width:100%;">
-    <div class="header-left">
-      <h1 id="studentName">Tên Sinh Viên</h1>
-      <h2>MSSV <span id="className">Mã số sinh viên</span></h2>
-    </div>
-    <div class="header-right">
-      <button style="float:right;" class="logout-button">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="logout-icon">
-          <path fill="white" d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5V3zm4.59 4.41L13.17 9H20v2h-6.83l1.42 1.59L14 14l-4-4 4-4 1.59 1.41z" />
-        </svg>
-      </button>
-    </div>
-  </div>
-  </header>
-  
-  
-
-  <div class="container">
-    <div style="width:100%;" class="main-content">
+    <div class="container">
+      <div style="width: 100%" class="main-content">
         <div class="schedule-container">
-            <h2 class="title_sd"><b>Lịch học, lịch thi theo tuần<b></h2>
-            <div class="options">
-              <button class="btn_sd"> < Trở về</button>
-              <input type="date" value="2024-11-17" class="date-input">
-              <button class="btn_sd">Tiếp ></button>
+          <h2 class="title_sd"><b>Lịch học, lịch thi theo tuần</b></h2>
+          <div class="options">
+            <button class="btn_sd">< Trở về</button>
+            <input type="date" value="2024-11-17" class="date-input" />
+            <button class="btn_sd">Tiếp ></button>
           </div>
-            <table class="schedule-table">
-                <thead>
-                    <tr class="tr_sd">
-                        <th >Ca học</th>
-                        <th >Thứ 2<br>11/11/2024</th>
-                        <th>Thứ 3<br>12/11/2024</th>
-                        <th>Thứ 4<br>13/11/2024</th>
-                        <th>Thứ 5<br>14/11/2024</th>
-                        <th>Thứ 6<br>15/11/2024</th>
-                        <th>Thứ 7<br>16/11/2024</th>
-                        <th>Chủ nhật<br>17/11/2024</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="td_ca"><b>Sáng</b></td>
-                        <td>
-                            <div class="class-box">
-                                <div class="icon-camera" onclick="openCamera()">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
-                                    </svg>
-                                </div>
-                                <strong>Lập trình Web</strong><br>
-                                23DHTT01 - 010100085401<br>
-                                Tiết: 1 - 4<br>
-                                Giờ: 07:00 - 10:35<br>
-                                Phòng: G601<br>
-                                GV: Nguyễn Thị Ngọc Thanh
-                            </div>
-                        </td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td class="td_ca"><b>Chiều</b></td>
-                        <td>
-                            <div class="class-box">
-                                <strong>Hệ điều hành</strong><br>
-                                23DHTT01 - 010100039501<br>
-                                Tiết: 6 - 9<br>
-                                Giờ: 12:00 - 15:35<br>
-                                Phòng: G601<br>
-                                GV: Huỳnh Thanh Sơn
-                            </div>
-                        </td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td class="td_ca"><b>Tối</b></td>
-                        <td>
-                          <div class="class-box">
-                              <strong>Hệ điều hành</strong><br>
-                              23DHTT01 - 010100039501<br>
-                              Tiết: 6 - 9<br>
-                              Giờ: 12:00 - 15:35<br>
-                              Phòng: G601<br>
-                              GV: Huỳnh Thanh Sơn
-                          </div>
-                       </td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                </tbody>
-            </table>
-           
+          <table class="schedule-table">
+            <thead>
+              <tr class="tr_sd">
+                <th>Ca học</th>
+                <th>Thứ 2<br />11/11/2024</th>
+                <th>Thứ 3<br />12/11/2024</th>
+                <th>Thứ 4<br />13/11/2024</th>
+                <th>Thứ 5<br />14/11/2024</th>
+                <th>Thứ 6<br />15/11/2024</th>
+                <th>Thứ 7<br />16/11/2024</th>
+                <th>Chủ nhật<br />17/11/2024</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td_ca"><b>Sáng</b></td>
+                <td>
+                  <div class="class-box">
+                    <div class="icon-camera" onclick="openCamera()">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        class="size-6"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"
+                        />
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"
+                        />
+                      </svg>
+                    </div>
+                    <strong>Lập trình Web</strong><br />
+                    23DHTT01 - 010100085401<br />
+                    Tiết: 1 - 4<br />
+                    Giờ: 07:00 - 10:35<br />
+                    Phòng: G601<br />
+                    GV: Nguyễn Thị Ngọc Thanh
+                  </div>
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td class="td_ca"><b>Chiều</b></td>
+                <td>
+                  <div class="class-box">
+                    <strong>Hệ điều hành</strong><br />
+                    23DHTT01 - 010100039501<br />
+                    Tiết: 6 - 9<br />
+                    Giờ: 12:00 - 15:35<br />
+                    Phòng: G601<br />
+                    GV: Huỳnh Thanh Sơn
+                  </div>
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td class="td_ca"><b>Tối</b></td>
+                <td>
+                  <div class="class-box">
+                    <strong>Hệ điều hành</strong><br />
+                    23DHTT01 - 010100039501<br />
+                    Tiết: 6 - 9<br />
+                    Giờ: 12:00 - 15:35<br />
+                    Phòng: G601<br />
+                    GV: Huỳnh Thanh Sơn
+                  </div>
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        </div>
+      </div>
     </div>
-  </div>
 
-  <footer>
-    <p>&copy; 2024 Hệ Thống Điểm Danh</p>
-    <link href="../stactic/js/scripts.js">
-  </footer>
+    <footer>
+      <p>&copy; 2024 Hệ Thống Điểm Danh</p>
+      <link href="../stactic/js/scripts.js" />
+    </footer>
 
-  <script>
-    function toggleAttendanceMenu(element) {
-      // Tìm phần tử chứa menu điểm danh tương ứng với dòng hiện tại
-      const menu = element.closest('td').querySelector('.attendance-menu');
-      
-      // Kiểm tra nếu menu đang hiển thị, thì ẩn nó, ngược lại thì hiển thị
-      if (menu.style.display === "block") {
-        menu.style.display = "none";
-      } else {
-        menu.style.display = "block";
-      }
-    }
+    <script>
+      async function openCamera() {
+        const video = document.createElement("video");
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
 
+        // Kiểm tra xem trình duyệt có hỗ trợ camera không
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+          video.srcObject = stream;
+          video.play();
 
-    const checkboxs = document.querySelectorAll('.side-nav input[type="checkbox"]');
+          // Khi video được phát, thiết lập kích thước của canvas
+          video.addEventListener("loadedmetadata", () => {
+            canvas.width = video.videoWidth; // Gán chiều rộng canvas bằng với video
+            canvas.height = video.videoHeight; // Gán chiều cao canvas bằng với video
+          });
 
-    checkboxs.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const liElement = this.closest('li');
-            console.log(liElement.classList);
+          // Hiển thị video trên trang
+          document.body.appendChild(video);
 
-            if (this.checked) {
-                liElement.classList.add('checked');
+          // Hàm chụp khung hình và gửi đến server
+          const captureFrame = async () => {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height); // Vẽ video lên canvas
+            const imageData = canvas.toDataURL("image/jpeg", 1.0); // Chuyển đổi thành base64 với chất lượng cao nhất
+
+            // Gửi yêu cầu đến API
+            const response = await fetch("/process_image", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ image: imageData }),
+            });
+
+            const data = await response.json();
+            console.log("Response from server:", data);
+            if (data.status === "success") {
+              alert(`Sinh viên ${data.MSSV} đã điểm danh thành công.`); // Hiển thị thông báo
+              stopCamera(); // Gọi hàm để tắt camera
             } else {
-                liElement.classList.remove('checked');
+              console.log("Face not recognized.");
             }
-        });
-    });
-    function toggleDropdown(event) {
-        const checkboxes = document.querySelectorAll('.side-nav input[type="checkbox"]');
-        checkboxes.forEach(checkbox => {
-            const liElement = checkbox.closest('li');
-            console.log(liElement)
-            if (checkbox !== event.target) {
-                checkbox.checked = false;
-                liElement.classList.remove('checked');
-            }
-            else {
-                liElement.classList.add('checked');
-            }
-        });
-    }
 
-    function openCamera() {
-        fetch('/open_camera')
-            .then(response => {
-                if (response.ok) {
-                    console.log("Camera opened successfully");
-                } else {
-                    console.error("Failed to open camera");
-                }
-            })
-            .catch(error => console.error("Error:", error));
-    }
+            setTimeout(captureFrame, 1000); // Chụp mỗi 5 giây
+          };
 
-  </script>
-</body>
+          captureFrame(); // Bắt đầu chụp khung hình
+        } else {
+          console.error("Camera not supported on this browser.");
+        }
+      }
+
+      function stopCamera() {
+        const video = document.querySelector("video");
+        if (video) {
+          const stream = video.srcObject;
+          if (stream) {
+            const tracks = stream.getTracks();
+            tracks.forEach((track) => track.stop()); // Dừng tất cả các track
+          }
+          video.srcObject = null; // Giải phóng video
+          video.remove(); // Xóa video khỏi DOM
+        }
+      }
+    </script>
+  </body>
 </html>
