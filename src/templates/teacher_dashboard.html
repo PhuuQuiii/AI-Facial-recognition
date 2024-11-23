@@ -36,7 +36,7 @@
               </li>
           </ul>
         </li>
-        <li><a href="#">Đăng xuất</a></li>
+        <li><a href="teacher_dashboard/logout">Đăng xuất</a></li>
       </ul>
     </div>
     <div class="main-content">
@@ -111,18 +111,26 @@
 
   <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
   <script>
-    function toggleAttendanceMenu(element) {
-      // Tìm phần tử chứa menu điểm danh tương ứng với dòng hiện tại
-      const menu = element.closest('td').querySelector('.attendance-menu');
-      
-      // Kiểm tra nếu menu đang hiển thị, thì ẩn nó, ngược lại thì hiển thị
-      if (menu.style.display === "block") {
-        menu.style.display = "none";
-      } else {
-        menu.style.display = "block";
-      }
-    }
+function toggleAttendanceMenu(element) {
+  // Tìm phần tử chứa menu điểm danh tương ứng với dòng hiện tại
+  const menu = element.closest('td').querySelector('.attendance-menu');
+  
+  // Kiểm tra nếu menu đang hiển thị, thì ẩn nó, ngược lại thì hiển thị
+  if (menu.style.display === "block") {
+    menu.style.display = "none";
+    document.removeEventListener('click', handleOutsideClick);
+  } else {
+    menu.style.display = "block";
+    document.addEventListener('click', handleOutsideClick);
+  }
 
+  function handleOutsideClick(event) {
+    if (!menu.contains(event.target) && event.target !== element) {
+      menu.style.display = "none";
+      document.removeEventListener('click', handleOutsideClick);
+    }
+  }
+}
 
     const checkboxs = document.querySelectorAll('.side-nav input[type="checkbox"]');
 
@@ -190,9 +198,10 @@
 
 
             label.onclick = () => {
-              loadStudents(i.id_class);
-              document.getElementById("className").innerText = i.name; // Cập nhật tên lớp trên header
-              document.getElementById("classRoom").innerText = i.room; // Hiển thị table điểm danh
+              loadStudents(i.id_class, null);
+              loadWeeks(i.id_class); // Gọi hàm loadWeeks khi chọn lớp
+              document.getElementById("className").innerText = i.name; // Cập nhật tên lớp
+              document.getElementById("classRoom").innerText = i.room; // Cập nhật phòng
             };
             // Gắn label vào listItem
             listItem.appendChild(label);
@@ -203,84 +212,83 @@
         });
     }
 
-    function loadStudents(classId) {
-      fetch(`/get_students?class_id=${classId}`)
+    function loadWeeks(classId) {
+      fetch(`/get_weeks?class_id=${classId}`)
         .then((response) => response.json())
         .then((data) => {
-          console.log(data);
-          const studentTableBody = document
-            .getElementById("liststudent")
-            .getElementsByTagName("tbody")[0];
-          studentTableBody.innerHTML = ""; // Clear previous data
-          data.students.forEach((student) => {
-            const row = studentTableBody.insertRow();
-            row.insertCell(0).innerText = student.MSSV;
-            row.insertCell(1).innerText = student.name;
+          console.log("Weeks data:", data);
+          const weekSelect = document.getElementById("week");
+          weekSelect.innerHTML = ""; // Clear previous data
+          if (data.success) {
+            data.weeks.forEach((week, index) => {
+              const option = document.createElement("option");
+              option.value = week.value;
+              option.textContent = week.label;
+              weekSelect.appendChild(option);
 
-            if (student.status == "Absent"){
-                row.insertCell(2).innerHTML = '<i class="icon-cancel"></i>';
-            } else {
-              row.insertCell(2).innerHTML = '<i class="icon-tick"></i>';
-            }
-
-            // Thêm nút cập nhật
-            const actionCell = row.insertCell(3);
-            const updateButton = document.createElement('div');
-            updateButton.style.position = 'relative';
-            updateButton.style.display = 'inline-flex';
-            updateButton.style.alignItems = 'center';
-            updateButton.innerHTML = `                              
-                              <i class="icon-edit" onclick="toggleAttendanceMenu(this)"></i>
-                              <div class="attendance-menu" style="display: none;">
-                                <ul>
-                                  <li value="attendance" onclick="updateStatus('attendance')">Điểm danh</li>
-                                  <li value="absent" onclick="updateStatus('absent')">Chưa điểm danh</li>
-                                </ul>
-                              </div>
-            
-            `;
-
-            actionCell.appendChild(updateButton);
-          });
-        });
-    }
-
-    function updateAttendance(mssv, status, classId) {
-      const date = new Date().toISOString().split("T")[0];
-
-      // Kiểm tra xem có bản ghi nào đã tồn tại không
-      fetch(`/check_attendance?student_id=${mssv}&date=${date}`)
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.exists) {
-            // Nếu bản ghi tồn tại, xóa nó trước khi thêm bản ghi mới
-            fetch("/delete_attendance", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                MSSV: mssv,
-                date: date,
-              }),
-            })
-              .then((response) => response.json())
-              .then((deleteData) => {
-                if (deleteData.success) {
-                  console.log("Old attendance record deleted successfully.");
-                  addNewAttendance(mssv, status, classId, date);
-                } else {
-                  console.error("Error deleting old attendance record.");
-                }
-              });
-          } else {
-            // Nếu không có bản ghi nào, thêm mới
-            addNewAttendance(mssv, status, classId, date);
+              // Automatically select the first week and load students
+              if (index === 0) {
+                weekSelect.value = week.value;
+                loadStudents(classId, week.value);
+              }
+            });
           }
         });
     }
 
-    function addNewAttendance(mssv, status, classId, date) {
+document.getElementById("week").addEventListener("change", function() {
+  const classId = document.getElementById("class").querySelector("label[for='class']").innerText.split(" - ")[0];
+  const weekValue = this.value;
+  loadStudents(classId, weekValue);
+});
+
+function loadStudents(classId, weekValue) {
+  let url = `/get_students?class_id=${classId}`;
+  if (weekValue) {
+    url += `&week=${weekValue}`;
+  }
+  fetch(url)
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data);
+      const studentTableBody = document
+        .getElementById("liststudent")
+        .getElementsByTagName("tbody")[0];
+      studentTableBody.innerHTML = ""; // Clear previous data
+      data.students.forEach((student) => {
+        const row = studentTableBody.insertRow();
+        row.insertCell(0).innerText = student.MSSV;
+        row.insertCell(1).innerText = student.name;
+
+        if (student.status == "Absent"){
+            row.insertCell(2).innerHTML = '<i class="icon-cancel"></i>';
+        } else {
+          row.insertCell(2).innerHTML = '<i class="icon-tick"></i>';
+        }
+
+        // Add update button
+        const actionCell = row.insertCell(3);
+        const updateButton = document.createElement('div');
+        updateButton.style.position = 'relative';
+        updateButton.style.display = 'inline-flex';
+        updateButton.style.alignItems = 'center';
+        updateButton.innerHTML = `                              
+                          <i class="icon-edit" onclick="toggleAttendanceMenu(this)"></i>
+                          <div class="attendance-menu" style="display: none;">
+                            <ul>
+                              <li value="present" onclick="updateAttendance('${student.MSSV}', 'Present', '${classId}', '${student.date}', this)">Điểm danh</li>
+                              <li value="absent" onclick="updateAttendance('${student.MSSV}', 'Absent', '${classId}', '${student.date}', this)">Chưa điểm danh</li>
+                            </ul>
+                          </div>
+        
+        `;
+
+        actionCell.appendChild(updateButton);
+      });
+    });
+}
+    function updateAttendance(mssv, status, classId, date, element) {
+      const formattedDate = new Date(date).toISOString().split('T')[0];
       fetch("/update_attendance", {
         method: "POST",
         headers: {
@@ -288,15 +296,22 @@
         },
         body: JSON.stringify({
           MSSV: mssv,
-          date: date,
           status: status,
           class_id: classId,
+          date: formattedDate,
         }),
       })
         .then((response) => response.json())
         .then((data) => {
           if (data.success) {
             console.log("Attendance updated successfully");
+            const row = element.closest('tr');
+            const statusCell = row.cells[2];
+            if (status === 'Absent') {
+              statusCell.innerHTML = '<i class="icon-cancel"></i>';
+            } else {
+              statusCell.innerHTML = '<i class="icon-tick"></i>';
+            }
           } else {
             console.error("Error updating attendance");
           }

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, jsonify
+from flask import Flask, render_template, request, session, jsonify, redirect, url_for
 import numpy as np
 import mysql.connector
 import align.detect_face
@@ -9,7 +9,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 load_dotenv() 
 import os
-import datetime
+from datetime import datetime, timedelta
 import base64
 import subprocess
 import cv2
@@ -21,6 +21,8 @@ import imutils
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY') # Thay đổi secret key cho bảo mật
 CORS(app)  # Để cho phép tất cả các nguồn kết nối
+CORS(app, resources={r"/*": {"origins": "*"}})  # Cho phép tất cả nguồn gốc
+
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Các biến toàn cục cần thiết
@@ -41,6 +43,7 @@ facenet.load_model('../Models/20180402-114759.pb')
 @app.route('/')
 def home():
     return render_template('index.html')
+
 @app.route('/login_student', methods=['GET', 'POST'])
 def login_student():
     if request.method == 'POST':
@@ -117,6 +120,12 @@ def login_teacher():
 def teacher_dashboard():
     return render_template('teacher_dashboard.html')
 
+# Route logout trang dashboard giáo viên
+@app.route('/teacher_dashboard/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login_teacher'))
+
 @socketio.on('connect')
 def handle_connect():
     print("Client đã kết nối")
@@ -179,9 +188,39 @@ def get_classes():
     print("Classes fetched:", classes)
     return jsonify({"classes": [{"id_class": cls[0], "name": cls[1], "room": cls[2]} for cls in classes]})
 
+@app.route('/get_weeks')
+def get_weeks():
+    class_id = request.args.get('class_id')
+    connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT DISTINCT date 
+        FROM Attendance 
+        WHERE class_id = %s 
+        ORDER BY date
+    """, (class_id,))
+    result = cursor.fetchall()
+    connection.close()
+
+    if not result:
+        return jsonify({"success": True, "weeks": []})  # Không có ngày học
+
+    # Danh sách ngày
+    dates = [row[0] for row in result]
+    weeks = []
+    delta = 0
+    # Tính toán các tuần dựa trên ngày học
+    for date in dates:
+        week_label = f"Tuần {delta + 1}"
+        weeks.append({"label": week_label, "value": str(date)})
+        delta += 1
+
+    return jsonify({"success": True, "weeks": weeks})
+
 @app.route('/get_students')
 def get_students():
     class_id = request.args.get('class_id')
+    date = request.args.get('week')
     connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
     cursor = connection.cursor()
     cursor.execute("""
@@ -189,8 +228,8 @@ def get_students():
         FROM Student s
         JOIN Student_Class sc ON s.MSSV = sc.student_id
         JOIN Attendance a ON s.MSSV = a.student_id
-        WHERE sc.class_id = %s
-    """, (class_id,))
+        WHERE sc.class_id = %s  AND a.date = %s
+    """, (class_id, date))
     students = cursor.fetchall()
     return jsonify({"students": [{"MSSV": student[0], "name": student[1], "date": student[2], "status": student[3]} for student in students]})
 
@@ -207,28 +246,31 @@ def get_student_info(student_id):
     return {"error": "Student not found"}
 
 @app.route('/update_attendance', methods=['POST'])
-def update_attendance(mssv, class_id, date, status):
+def update_attendance():
+    data = request.get_json()  # Lấy dữ liệu JSON từ request
+    mssv = data.get('MSSV')  # Lấy giá trị MSSV
+    class_id = data.get('class_id')  # Lấy class_id
+    date = data.get('date')
+    status = data.get('status')  # Lấy status
+
+    # Kiểm tra nếu thiếu dữ liệu
+    if not all([mssv, class_id, date, status]):
+        return jsonify({"success": False, "message": "Thiếu dữ liệu bắt buộc."}), 400
+
+    # Kết nối cơ sở dữ liệu
     connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
     cursor = connection.cursor()
-    
-    # Xóa bản ghi cũ nếu tồn tại
+        # Nếu bản ghi tồn tại, cập nhật trạng thái
     cursor.execute("""
-        DELETE FROM Attendance 
-        WHERE student_id = %s AND date = %s
-    """, (mssv, date))
-
-    # Thêm bản ghi mới
-    cursor.execute("""
-        INSERT INTO Attendance (student_id, class_id, date, status) 
-        VALUES (%s, %s, %s, %s) 
-        ON DUPLICATE KEY UPDATE status=VALUES(status), date=VALUES(date)
-    """, (mssv, class_id, date, status))
-
+        UPDATE Attendance 
+        SET status = %s 
+        WHERE student_id = %s AND class_id = %s AND date = %s
+    """, (status, mssv, class_id,  date))
     connection.commit()
     cursor.close()
     connection.close()
-    
-    return jsonify({"success": True})
+
+    return jsonify({"success": True, "message": status})
 
 @app.before_request
 def before_request_func():
