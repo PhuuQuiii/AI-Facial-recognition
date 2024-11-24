@@ -218,11 +218,13 @@ function toggleAttendanceMenu(element) {
         .then((data) => {
           console.log("Weeks data:", data);
           const weekSelect = document.getElementById("week");
+          weekSelect.id = classId;
           weekSelect.innerHTML = ""; // Clear previous data
           if (data.success) {
             data.weeks.forEach((week, index) => {
               const option = document.createElement("option");
               option.value = week.value;
+              option.id = classId;
               option.textContent = week.label;
               weekSelect.appendChild(option);
 
@@ -239,7 +241,7 @@ function toggleAttendanceMenu(element) {
 document.getElementById("week").addEventListener("change", function() {
   const classId = document.getElementById("class").querySelector("label[for='class']").innerText.split(" - ")[0];
   const weekValue = this.value;
-  loadStudents(classId, weekValue);
+  loadStudents(this.id, weekValue);
 });
 
 function loadStudents(classId, weekValue) {

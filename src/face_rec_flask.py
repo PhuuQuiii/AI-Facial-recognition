@@ -366,7 +366,10 @@ def train_model():
 def open_camera():
     try:
         # Chạy lệnh mở camera
-        subprocess.Popen(['python', 'face_rec_cam.py'])
+        process = subprocess.Popen(['python', 'face_rec_cam.py'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        if process.returncode != 0:
+            raise Exception(stderr.decode('utf-8'))
         return jsonify({"success": True})
     except Exception as e:
         print(f"Error opening camera: {e}")

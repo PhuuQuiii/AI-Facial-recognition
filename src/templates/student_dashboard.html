@@ -130,75 +130,89 @@
     </footer>
 
     <script>
-      async function openCamera(element) {
-        const video = document.createElement("video");
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
+      // async function openCamera(element) {
+      //   const video = document.createElement("video");
+      //   const canvas = document.createElement("canvas");
+      //   const context = canvas.getContext("2d");
 
-        // Kiểm tra xem trình duyệt có hỗ trợ camera không
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-          });
-          video.srcObject = stream;
-          video.play();
+      //   // Kiểm tra xem trình duyệt có hỗ trợ camera không
+      //   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      //     const stream = await navigator.mediaDevices.getUserMedia({
+      //       video: true,
+      //     });
+      //     video.srcObject = stream;
+      //     video.play();
 
-          // Khi video được phát, thiết lập kích thước của canvas
-          video.addEventListener("loadedmetadata", () => {
-            canvas.width = video.videoWidth; // Gán chiều rộng canvas bằng với video
-            canvas.height = video.videoHeight; // Gán chiều cao canvas bằng với video
-          });
+      //     // Khi video được phát, thiết lập kích thước của canvas
+      //     video.addEventListener("loadedmetadata", () => {
+      //       canvas.width = video.videoWidth; // Gán chiều rộng canvas bằng với video
+      //       canvas.height = video.videoHeight; // Gán chiều cao canvas bằng với video
+      //     });
 
-          // Hiển thị video trên trang
-          document.body.appendChild(video);
+      //     // Hiển thị video trên trang
+      //     document.body.appendChild(video);
 
-          // Hàm chụp khung hình và gửi đến server
-          const captureFrame = async () => {
-            context.drawImage(video, 0, 0, canvas.width, canvas.height); // Vẽ video lên canvas
-            const imageData = canvas.toDataURL("image/jpeg", 1.0); // Chuyển đổi thành base64 với chất lượng cao nhất
+      //     // Hàm chụp khung hình và gửi đến server
+      //     const captureFrame = async () => {
+      //       context.drawImage(video, 0, 0, canvas.width, canvas.height); // Vẽ video lên canvas
+      //       const imageData = canvas.toDataURL("image/jpeg", 1.0); // Chuyển đổi thành base64 với chất lượng cao nhất
 
-            // Gửi yêu cầu đến API
-            const response = await fetch("/process_image", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ image: imageData }),
-            });
+      //       // Gửi yêu cầu đến API
+      //       const response = await fetch("/process_image", {
+      //         method: "POST",
+      //         headers: {
+      //           "Content-Type": "application/json",
+      //         },
+      //         body: JSON.stringify({ image: imageData }),
+      //       });
 
-            const data = await response.json();
-            console.log("Response from server:", data);
-            if (data.status === "success") {
-              alert(`Sinh viên ${data.MSSV} đã điểm danh thành công.`); // Hiển thị thông báo
-              element.innerHTML ='';
-              element.classList.add('icon-tick');
-              stopCamera(); // Gọi hàm để tắt camera
-            } else {
-              console.log("Face not recognized.");
-            }
+      //       const data = await response.json();
+      //       console.log("Response from server:", data);
+      //       if (data.status === "success") {
+      //         alert(`Sinh viên ${data.MSSV} đã điểm danh thành công.`); // Hiển thị thông báo
+      //         element.innerHTML ='';
+      //         element.classList.add('icon-tick');
+      //         stopCamera(); // Gọi hàm để tắt camera
+      //       } else {
+      //         console.log("Face not recognized.");
+      //       }
 
-            setTimeout(captureFrame, 1000); // Chụp mỗi 5 giây
-          };
+      //       setTimeout(captureFrame, 1000); // Chụp mỗi 5 giây
+      //     };
 
-          captureFrame(); // Bắt đầu chụp khung hình
-        } else {
-          console.error("Camera not supported on this browser.");
-        }
+      //     captureFrame(); // Bắt đầu chụp khung hình
+      //   } else {
+      //     console.error("Camera not supported on this browser.");
+      //   }
+      // }
+
+
+      // function stopCamera() {
+      //   const video = document.querySelector("video");
+      //   if (video) {
+      //     const stream = video.srcObject;
+      //     if (stream) {
+      //       const tracks = stream.getTracks();
+      //       tracks.forEach((track) => track.stop()); // Dừng tất cả các track
+      //     }
+      //     video.srcObject = null; // Giải phóng video
+      //     video.remove(); // Xóa video khỏi DOM
+      //   }
+      // }
+
+      function openCamera(element) {
+        const response = fetch("/open_camera");
+        console.log(response);
       }
+      function stopCamera(video) {
+        const stream = video.srcObject;
+        const tracks = stream.getTracks();
 
-      function stopCamera() {
-        const video = document.querySelector("video");
-        if (video) {
-          const stream = video.srcObject;
-          if (stream) {
-            const tracks = stream.getTracks();
-            tracks.forEach((track) => track.stop()); // Dừng tất cả các track
-          }
-          video.srcObject = null; // Giải phóng video
-          video.remove(); // Xóa video khỏi DOM
-        }
+        tracks.forEach(track => track.stop());
+        video.srcObject = null;
+        video.remove();
       }
-// hiện tên và mssv
+      // hiện tên và mssv
       const studentInfo = JSON.parse(sessionStorage.getItem("studentInfo"));
     console.log("student Info:", studentInfo); // Kiểm tra thông tin sinh viên
 
