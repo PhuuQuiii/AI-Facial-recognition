@@ -145,6 +145,9 @@
           console.error("Không thể mở camera:", data.message);
         }
       }
+      function stopCamera(video) {
+        const stream = video.srcObject;
+        const tracks = stream.getTracks();
 
       function showNotification(message) {
         const notification = document.createElement("div");
