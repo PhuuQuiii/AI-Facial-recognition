@@ -44,6 +44,10 @@ facenet.load_model('../Models/20180402-114759.pb')
 def home():
     return render_template('index.html')
 
+@app.route('/student')
+def student():
+    return render_template('student.html')
+
 @app.route('/login_student', methods=['GET', 'POST'])
 def login_student():
     if request.method == 'POST':
@@ -357,99 +361,102 @@ def train_model():
         print(f"Error during training: {e}")
         return jsonify({"success": False, "message": str(e)})
 
-# @app.route('/open_camera')
-# def open_camera():
-#     try:
-#         # Chạy lệnh mở camera
-#         subprocess.Popen(['python', 'face_rec_cam.py'])
-#         return jsonify({"success": True})
-#     except Exception as e:
-#         print(f"Error opening camera: {e}")
-#         return jsonify({"success": False, "message": str(e)})
+# Cam Python
+@app.route('/open_camera')
+def open_camera():
+    try:
+        # Chạy lệnh mở camera
+        subprocess.Popen(['python', 'face_rec_cam.py'])
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"Error opening camera: {e}")
+        return jsonify({"success": False, "message": str(e)})
 
-@app.route('/process_image', methods=['POST'])
-def process_image():
-    data = request.json
-    image_data = data['image']
+
+# # Production web
+# @app.route('/process_image', methods=['POST'])
+# def process_image():
+#     data = request.json
+#     image_data = data['image']
     
-    if not image_data.startswith('data:image/jpeg;base64,'):
-        return jsonify({"status": "error", "message": "Invalid image format"}), 400
+#     if not image_data.startswith('data:image/jpeg;base64,'):
+#         return jsonify({"status": "error", "message": "Invalid image format"}), 400
     
-    # Chuyển đổi từ base64 về numpy array
-    img_data = base64.b64decode(image_data.split(',')[1])
-    np_arr = np.frombuffer(img_data, np.uint8)
-    frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+#     # Chuyển đổi từ base64 về numpy array
+#     img_data = base64.b64decode(image_data.split(',')[1])
+#     np_arr = np.frombuffer(img_data, np.uint8)
+#     frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
 
-    # Xử lý nhận diện khuôn mặt
-    MINSIZE = 20
-    THRESHOLD = [0.6, 0.7, 0.7]
-    FACTOR = 0.709
-    INPUT_IMAGE_SIZE = 160  
-    CLASSIFIER_PATH = '../Models/facemodel.pkl'
-    FACENET_MODEL_PATH = '../Models/20180402-114759.pb'
+#     # Xử lý nhận diện khuôn mặt
+#     MINSIZE = 20
+#     THRESHOLD = [0.6, 0.7, 0.7]
+#     FACTOR = 0.709
+#     INPUT_IMAGE_SIZE = 160  
+#     CLASSIFIER_PATH = '../Models/facemodel.pkl'
+#     FACENET_MODEL_PATH = '../Models/20180402-114759.pb'
 
-    # Load The Custom Classifier
-    with open(CLASSIFIER_PATH, 'rb') as file:
-        model, class_names = pickle.load(file)
-    # print("Custom Classifier, Successfully loaded")
+#     # Load The Custom Classifier
+#     with open(CLASSIFIER_PATH, 'rb') as file:
+#         model, class_names = pickle.load(file)
+#     # print("Custom Classifier, Successfully loaded")
 
-    with tf.Graph().as_default():
-        # Cài đặt GPU nếu có
-        gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.6)
-        sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options, log_device_placement=False))
+#     with tf.Graph().as_default():
+#         # Cài đặt GPU nếu có
+#         gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.6)
+#         sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options, log_device_placement=False))
 
-        with sess.as_default():
-            # Load the model
-            # print('Loading feature extraction model')
-            facenet.load_model(FACENET_MODEL_PATH)
+#         with sess.as_default():
+#             # Load the model
+#             # print('Loading feature extraction model')
+#             facenet.load_model(FACENET_MODEL_PATH)
 
-            # Get input and output tensors
-            images_placeholder = tf.compat.v1.get_default_graph().get_tensor_by_name("input:0")
-            embeddings = tf.compat.v1.get_default_graph().get_tensor_by_name("embeddings:0")
-            phase_train_placeholder = tf.compat.v1.get_default_graph().get_tensor_by_name("phase_train:0")
+#             # Get input and output tensors
+#             images_placeholder = tf.compat.v1.get_default_graph().get_tensor_by_name("input:0")
+#             embeddings = tf.compat.v1.get_default_graph().get_tensor_by_name("embeddings:0")
+#             phase_train_placeholder = tf.compat.v1.get_default_graph().get_tensor_by_name("phase_train:0")
 
-            # Phát hiện khuôn mặt
-            pnet, rnet, onet = align.detect_face.create_mtcnn(sess, "../src/align")
-            bounding_boxes, _ = align.detect_face.detect_face(frame, MINSIZE, pnet, rnet, onet, THRESHOLD, FACTOR)
+#             # Phát hiện khuôn mặt
+#             pnet, rnet, onet = align.detect_face.create_mtcnn(sess, "../src/align")
+#             bounding_boxes, _ = align.detect_face.detect_face(frame, MINSIZE, pnet, rnet, onet, THRESHOLD, FACTOR)
 
-            # if bounding_boxes.shape[0] == 0:
-            #     return jsonify({"status": "no_face_detected"}), 200
+#             # if bounding_boxes.shape[0] == 0:
+#             #     return jsonify({"status": "no_face_detected"}), 200
 
-            faces_found = bounding_boxes.shape[0]
-            # print(f"Number of faces found: {faces_found}")
-            if faces_found > 0:
-                for i in range(faces_found):
-                    det = bounding_boxes[i]
-                    bb = np.zeros((1, 4), dtype=np.int32)
-                    bb[0][0] = int(det[0])
-                    bb[0][1] = int(det[1])
-                    bb[0][2] = int(det[2])
-                    bb[0][3] = int(det[3])
+#             faces_found = bounding_boxes.shape[0]
+#             # print(f"Number of faces found: {faces_found}")
+#             if faces_found > 0:
+#                 for i in range(faces_found):
+#                     det = bounding_boxes[i]
+#                     bb = np.zeros((1, 4), dtype=np.int32)
+#                     bb[0][0] = int(det[0])
+#                     bb[0][1] = int(det[1])
+#                     bb[0][2] = int(det[2])
+#                     bb[0][3] = int(det[3])
 
-                    # Cắt và tiền xử lý khuôn mặt
-                    cropped = frame[bb[0][1]:bb[0][3], bb[0][0]:bb[0][2], :]
-                    scaled = cv2.resize(cropped, (INPUT_IMAGE_SIZE, INPUT_IMAGE_SIZE), interpolation=cv2.INTER_CUBIC)
-                    scaled = facenet.prewhiten(scaled)
-                    scaled_reshape = scaled.reshape(-1, INPUT_IMAGE_SIZE, INPUT_IMAGE_SIZE, 3)
+#                     # Cắt và tiền xử lý khuôn mặt
+#                     cropped = frame[bb[0][1]:bb[0][3], bb[0][0]:bb[0][2], :]
+#                     scaled = cv2.resize(cropped, (INPUT_IMAGE_SIZE, INPUT_IMAGE_SIZE), interpolation=cv2.INTER_CUBIC)
+#                     scaled = facenet.prewhiten(scaled)
+#                     scaled_reshape = scaled.reshape(-1, INPUT_IMAGE_SIZE, INPUT_IMAGE_SIZE, 3)
 
-                    # Trích xuất đặc trưng khuôn mặt
-                    feed_dict = {images_placeholder: scaled_reshape, phase_train_placeholder: False}
-                    emb_array = sess.run(embeddings, feed_dict=feed_dict)
+#                     # Trích xuất đặc trưng khuôn mặt
+#                     feed_dict = {images_placeholder: scaled_reshape, phase_train_placeholder: False}
+#                     emb_array = sess.run(embeddings, feed_dict=feed_dict)
 
-                    # Nhận diện khuôn mặt
-                    predictions = model.predict_proba(emb_array)
-                    best_class_indices = np.argmax(predictions, axis=1)
-                    best_class_probabilities = predictions[np.arange(len(best_class_indices)), best_class_indices]
-                    best_name = class_names[best_class_indices[0]]
+#                     # Nhận diện khuôn mặt
+#                     predictions = model.predict_proba(emb_array)
+#                     best_class_indices = np.argmax(predictions, axis=1)
+#                     best_class_probabilities = predictions[np.arange(len(best_class_indices)), best_class_indices]
+#                     best_name = class_names[best_class_indices[0]]
 
-                    if best_class_probabilities > 0.8:
-                        print(f"Detected: {best_name} with probability: {best_class_probabilities}")
-                        return jsonify({"MSSV": best_name, "status": "success"})
-                    else:
-                        print("Face not recognized.")
-                        return jsonify({"status": "unknown"})
+#                     if best_class_probabilities > 0.8:
+#                         print(f"Detected: {best_name} with probability: {best_class_probabilities}")
+#                         return jsonify({"MSSV": best_name, "status": "success"})
+#                     else:
+#                         print("Face not recognized.")
+#                         return jsonify({"status": "unknown"})
 
-    return jsonify({"status": "no_face_detected"})
+#     return jsonify({"status": "no_face_detected"})
 
 # @socketio.on('image')
 # def handle_image(data):
