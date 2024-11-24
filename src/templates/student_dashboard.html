@@ -58,7 +58,15 @@
                 <td class="td_ca"><b>Sáng</b></td>
                 <td>
                   <div class="class-box">
-                    <div class="icon-camera" onclick="openCamera()">
+                    <div>
+                    <strong>Phân tích và thiết kế thuật giải</strong><br />
+                    23DHTT01 - 010100085401<br />
+                    Tiết: 1 - 4<br />
+                    Giờ: 07:00 - 10:35<br />
+                    Phòng: G601<br />
+                    GV: Nguyễn Thị Ngọc Thanh
+                    </div>
+                    <div class="icon-camera" onclick="openCamera(this)">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
@@ -79,12 +87,6 @@
                         />
                       </svg>
                     </div>
-                    <strong>Lập trình Web</strong><br />
-                    23DHTT01 - 010100085401<br />
-                    Tiết: 1 - 4<br />
-                    Giờ: 07:00 - 10:35<br />
-                    Phòng: G601<br />
-                    GV: Nguyễn Thị Ngọc Thanh
                   </div>
                 </td>
                 <td></td>
@@ -97,14 +99,6 @@
               <tr>
                 <td class="td_ca"><b>Chiều</b></td>
                 <td>
-                  <div class="class-box">
-                    <strong>Hệ điều hành</strong><br />
-                    23DHTT01 - 010100039501<br />
-                    Tiết: 6 - 9<br />
-                    Giờ: 12:00 - 15:35<br />
-                    Phòng: G601<br />
-                    GV: Huỳnh Thanh Sơn
-                  </div>
                 </td>
                 <td></td>
                 <td></td>
@@ -116,12 +110,6 @@
               <tr>
                 <td class="td_ca"><b>Tối</b></td>
                 <td>
-                  <div class="class-box">
-                    <strong><p id="monhoc">Môn</p></strong><br/>
-                    <p id="lophoc">Lớp</p><br/>
-                    <p id="phonghoc">Phòng</p><br/>
-                    <p id="gv">GV</p><br/>
-                  </div>
                 </td>
                 <td></td>
                 <td></td>
@@ -142,7 +130,7 @@
     </footer>
 
     <script>
-      async function openCamera() {
+      async function openCamera(element) {
         const video = document.createElement("video");
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
@@ -182,6 +170,8 @@
             console.log("Response from server:", data);
             if (data.status === "success") {
               alert(`Sinh viên ${data.MSSV} đã điểm danh thành công.`); // Hiển thị thông báo
+              element.innerHTML ='';
+              element.classList.add('icon-tick');
               stopCamera(); // Gọi hàm để tắt camera
             } else {
               console.log("Face not recognized.");
