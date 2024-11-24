@@ -29,24 +29,24 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 socketio_client = Client()
 
-attendance_log = {}
+# attendance_log = {}
 
-def check_attendance(MSSV):
-    today = str(datetime.date.today())
+# def check_attendance(MSSV):
+#     today = str(datetime.date.today())
 
-    # Nếu ngày hôm nay chưa tồn tại trong attendance_log, khởi tạo một set mới
-    if today not in attendance_log:
-        attendance_log[today] = set()
+#     # Nếu ngày hôm nay chưa tồn tại trong attendance_log, khởi tạo một set mới
+#     if today not in attendance_log:
+#         attendance_log[today] = set()
 
-    # Kiểm tra nếu MSSV đã có trong set của ngày hôm nay
-    if MSSV in attendance_log[today]:
-        print(f"Sinh viên {MSSV} đã điểm danh hôm nay.")
-        return False
-    else:
-        # Nếu chưa điểm danh, thêm MSSV vào set và trả về True
-        attendance_log[today].add(MSSV)
-        print(f"Sinh viên {MSSV} được điểm danh.")
-        return True
+#     # Kiểm tra nếu MSSV đã có trong set của ngày hôm nay
+#     if MSSV in attendance_log[today]:
+#         print(f"Sinh viên {MSSV} đã điểm danh hôm nay.")
+#         return False
+#     else:
+#         # Nếu chưa điểm danh, thêm MSSV vào set và trả về True
+#         attendance_log[today].add(MSSV)
+#         print(f"Sinh viên {MSSV} được điểm danh.")
+#         return True
 
 def main():
     # Kết nối đến server
@@ -67,8 +67,10 @@ def main():
     IMAGE_SIZE = 182
     INPUT_IMAGE_SIZE = 160
     CLASSIFIER_PATH = '../Models/facemodel.pkl'
+    # CLASSIFIER_PATH = 'Models/facemodel.pkl'
     VIDEO_PATH = args.path
     FACENET_MODEL_PATH = '../Models/20180402-114759.pb'
+    # FACENET_MODEL_PATH = 'Models/20180402-114759.pb'
 
     # Load The Custom Classifier
     with open(CLASSIFIER_PATH, 'rb') as file:
@@ -153,13 +155,15 @@ def main():
                                                 1, (255, 255, 255), thickness=1, lineType=2)
                                     cv2.putText(frame, str(round(best_class_probabilities[0], 3)), (text_x, text_y + 17),
                                                 cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), thickness=1, lineType=2)
+                                    
+                                    socketio_client.emit('response', {"MSSV": best_name})
 
-                                    # Gửi thông báo qua SocketIO nếu chưa điểm danh hôm nay
-                                    if check_attendance(best_name):
-                                        socketio_client.emit('response', {"MSSV": best_name})
-                                        print(f"Đã gửi socket điểm danh cho sinh viên: {name} (MSSV: {best_name})")
-                                    else:
-                                        print(f"Sinh viên {name} (MSSV: {best_name}) đã điểm danh trước đó.")
+                                    # # Gửi thông báo qua SocketIO nếu chưa điểm danh hôm nay
+                                    # if check_attendance(best_name):
+                                    #     socketio_client.emit('response', {"MSSV": best_name})
+                                    #     print(f"Đã gửi socket điểm danh cho sinh viên: {name} (MSSV: {best_name})")
+                                    # else:
+                                    #     print(f"Sinh viên {name} (MSSV: {best_name}) đã điểm danh trước đó.")
 
                                 else:
                                     name = "Unknown"

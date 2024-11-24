@@ -140,27 +140,31 @@ def handle_disconnect():
 
 @socketio.on('response')
 def handle_response(data):
+
     if 'MSSV' in data:
-        student_info = get_student_info(data['MSSV'])
-        if student_info:
-            # Lấy class_id từ cơ sở dữ liệu
-            class_id = get_class_id_by_student_id(student_info["MSSV"])
-            if class_id:
-                # Cập nhật điểm danh
-                date = str(datetime.date.today())  # Lấy ngày hiện tại
-                update_attendance(student_info["MSSV"], class_id, date, "Present")  # Gọi hàm với các tham số cần thiết
-                
-                emit('response', {
-                    "MSSV": student_info["MSSV"],
-                    "name": student_info["name"],
-                    "message": f"Sinh viên {student_info['name']} (MSSV: {student_info['MSSV']}) đã điểm danh."
+        emit('response', { "message": f"(MSSV: {data['MSSV']}) đã điểm danh."
                 }, broadcast=True)
-            else:
-                emit('response', {"error": "Class ID not found"}, broadcast=True)
-        else:
-            emit('response', {"error": "Student not found"}, broadcast=True)
-    else:
-        emit('response', {"error": "MSSV không được cung cấp"}, broadcast=True)
+    #     student_info = get_student_info(data['MSSV'])
+    #     if student_info:
+    #         # Lấy class_id từ cơ sở dữ liệu
+    #         class_id = get_class_id_by_student_id(student_info["MSSV"])
+    #         if class_id:
+    #             # Cập nhật điểm danh
+    #             date = str(datetime.date.today())  # Lấy ngày hiện tại
+    #             update_attendance(student_info["MSSV"], class_id, date, "Present")  # Gọi hàm với các tham số cần thiết
+                
+    #             emit('response', {
+    #                 "MSSV": student_info["MSSV"],
+    #                 "name": student_info["name"],
+    #                 "message": f"Sinh viên {student_info['name']} (MSSV: {student_info['MSSV']}) đã điểm danh."
+    #             }, broadcast=True)
+    #         else:
+    #             emit('response', {"error": "Class ID not found"}, broadcast=True)
+    #     else:
+    #         emit('response', {"error": "Student not found"}, broadcast=True)
+    # else:
+    #     emit('response', {"error": "MSSV không được cung cấp"}, broadcast=True)
+    
 
 def get_class_id_by_student_id(student_id): # lấy class_id từ cơ sở dữ liệu
     connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')

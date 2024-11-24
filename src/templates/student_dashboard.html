@@ -12,7 +12,7 @@
       <div style="width: 100%">
         <div class="header-left">
           <h1 id="studentName">Tên Sinh Viên</h1>
-          <h2 id="MSSV"> Mã số sinh viên</h2>
+          <h2 id="MSSV">Mã số sinh viên</h2>
         </div>
         <div class="header-right">
           <button style="float: right" id="logout-button">
@@ -44,13 +44,13 @@
             <thead>
               <tr class="tr_sd">
                 <th>Ca học</th>
-                <th>Thứ 2<br/></th>
-                <th>Thứ 3<br/></th>
-                <th>Thứ 4<br/></th>
-                <th>Thứ 5<br/></th>
-                <th>Thứ 6<br/></th>
-                <th>Thứ 7<br/></th>
-                <th>Chủ nhật<br/></th>
+                <th>Thứ 2<br /></th>
+                <th>Thứ 3<br /></th>
+                <th>Thứ 4<br /></th>
+                <th>Thứ 5<br /></th>
+                <th>Thứ 6<br /></th>
+                <th>Thứ 7<br /></th>
+                <th>Chủ nhật<br /></th>
               </tr>
             </thead>
             <tbody>
@@ -59,12 +59,12 @@
                 <td>
                   <div class="class-box">
                     <div>
-                    <strong>Phân tích và thiết kế thuật giải</strong><br />
-                    23DHTT01 - 010100085401<br />
-                    Tiết: 1 - 4<br />
-                    Giờ: 07:00 - 10:35<br />
-                    Phòng: G601<br />
-                    GV: Nguyễn Thị Ngọc Thanh
+                      <strong>Phân tích và thiết kế thuật giải</strong><br />
+                      23DHTT01 - 010100085401<br />
+                      Tiết: 1 - 4<br />
+                      Giờ: 07:00 - 10:35<br />
+                      Phòng: G601<br />
+                      GV: Nguyễn Thị Ngọc Thanh
                     </div>
                     <div class="icon-camera" onclick="openCamera(this)">
                       <svg
@@ -98,8 +98,7 @@
               </tr>
               <tr>
                 <td class="td_ca"><b>Chiều</b></td>
-                <td>
-                </td>
+                <td></td>
                 <td></td>
                 <td></td>
                 <td></td>
@@ -109,8 +108,7 @@
               </tr>
               <tr>
                 <td class="td_ca"><b>Tối</b></td>
-                <td>
-                </td>
+                <td></td>
                 <td></td>
                 <td></td>
                 <td></td>
@@ -128,187 +126,146 @@
       <p>&copy; 2024 Hệ Thống Điểm Danh</p>
       <link href="../stactic/js/scripts.js" />
     </footer>
-
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
+      const socket = io();
+      // Gọi API cam python
       async function openCamera(element) {
-        const video = document.createElement("video");
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
-
-        // Kiểm tra xem trình duyệt có hỗ trợ camera không
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-          });
-          video.srcObject = stream;
-          video.play();
-
-          // Khi video được phát, thiết lập kích thước của canvas
-          video.addEventListener("loadedmetadata", () => {
-            canvas.width = video.videoWidth; // Gán chiều rộng canvas bằng với video
-            canvas.height = video.videoHeight; // Gán chiều cao canvas bằng với video
-          });
-
-          // Hiển thị video trên trang
-          document.body.appendChild(video);
-
-          // Hàm chụp khung hình và gửi đến server
-          const captureFrame = async () => {
-            context.drawImage(video, 0, 0, canvas.width, canvas.height); // Vẽ video lên canvas
-            const imageData = canvas.toDataURL("image/jpeg", 1.0); // Chuyển đổi thành base64 với chất lượng cao nhất
-
-            // Gửi yêu cầu đến API
-            const response = await fetch("/process_image", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ image: imageData }),
-            });
-
-            const data = await response.json();
-            console.log("Response from server:", data);
-            if (data.status === "success") {
-              alert(`Sinh viên ${data.MSSV} đã điểm danh thành công.`); // Hiển thị thông báo
-              element.innerHTML ='';
-              element.classList.add('icon-tick');
-              stopCamera(); // Gọi hàm để tắt camera
-            } else {
-              console.log("Face not recognized.");
+        // Gọi API để mở camera
+        const response = await fetch("/open_camera");
+        const data = await response.json();
+        if (data.success) {
+          // Lắng nghe sự kiện từ socket
+          socket.on("response", function (data) {
+            if (data.message) {
+              showNotification(data.message);
             }
-
-            setTimeout(captureFrame, 1000); // Chụp mỗi 5 giây
-          };
-
-          captureFrame(); // Bắt đầu chụp khung hình
+          });
         } else {
-          console.error("Camera not supported on this browser.");
+          console.error("Không thể mở camera:", data.message);
         }
       }
 
-      function stopCamera() {
-        const video = document.querySelector("video");
-        if (video) {
-          const stream = video.srcObject;
-          if (stream) {
-            const tracks = stream.getTracks();
-            tracks.forEach((track) => track.stop()); // Dừng tất cả các track
-          }
-          video.srcObject = null; // Giải phóng video
-          video.remove(); // Xóa video khỏi DOM
-        }
+      function showNotification(message) {
+        const notification = document.createElement("div");
+        notification.className = "notification";
+        notification.innerText = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+          notification.remove();
+        }, 5000); // Thời gian hiển thị 5 giây
       }
-// hiện tên và mssv
+
+      // hiện tên và mssv
       const studentInfo = JSON.parse(sessionStorage.getItem("studentInfo"));
-    console.log("student Info:", studentInfo); // Kiểm tra thông tin sinh viên
+      console.log("student Info:", studentInfo); // Kiểm tra thông tin sinh viên
 
-    if (studentInfo && studentInfo.student_id ) {
-      document.getElementById("studentName").innerText = studentInfo.name;
-      document.getElementById("MSSV").innerText = studentInfo.student_id;
-    } else {
-      console.error(
-        "Student ID is undefined or teacherInfo is not available."
-      );
-    }
+      if (studentInfo && studentInfo.student_id) {
+        document.getElementById("studentName").innerText = studentInfo.name;
+        document.getElementById("MSSV").innerText = studentInfo.student_id;
+      } else {
+        console.error(
+          "Student ID is undefined or teacherInfo is not available."
+        );
+      }
 
-// đăng xuất 
-document
-  .getElementById("logout-button")
-  .addEventListener("click", function () {
-    sessionStorage.removeItem("studentInfo");
-    window.location.href = "../";
-  });
+      // đăng xuất
+      document
+        .getElementById("logout-button")
+        .addEventListener("click", function () {
+          sessionStorage.removeItem("studentInfo");
+          window.location.href = "../";
+        });
 
+      // ngày
+      document.addEventListener("DOMContentLoaded", function () {
+        const dateInput = document.querySelector(".date-input");
+        const btnPrev = document.querySelector(".btn_sd:first-child");
+        const btnNext = document.querySelector(".btn_sd:last-child");
 
+        // Khởi tạo ngày hiện tại
+        const today = new Date();
+        dateInput.value = formatDateForInput(today);
 
-// ngày 
-document.addEventListener("DOMContentLoaded", function () {
-  const dateInput = document.querySelector(".date-input");
-  const btnPrev = document.querySelector(".btn_sd:first-child"); 
-  const btnNext = document.querySelector(".btn_sd:last-child"); 
+        // Cập nhật lịch khi vào trang
+        updateSchedule(new Date(dateInput.value));
 
-  // Khởi tạo ngày hiện tại
-  const today = new Date();
-  dateInput.value = formatDateForInput(today);
+        // Gắn sự kiện cho nút "Trở về"
+        btnPrev.addEventListener("click", function () {
+          adjustWeek(-7); // Lùi 1 tuần
+        });
 
-  // Cập nhật lịch khi vào trang
-  updateSchedule(new Date(dateInput.value));
+        // Gắn sự kiện cho nút "Tiếp"
+        btnNext.addEventListener("click", function () {
+          adjustWeek(7); // Tăng 1 tuần
+        });
 
-  // Gắn sự kiện cho nút "Trở về"
-  btnPrev.addEventListener("click", function () {
-    adjustWeek(-7); // Lùi 1 tuần
-  });
+        // Hàm điều chỉnh tuần
+        function adjustWeek(days) {
+          const currentDate = new Date(dateInput.value); // Ngày hiện tại trong input
+          currentDate.setDate(currentDate.getDate() + days); // Điều chỉnh số ngày
+          dateInput.value = formatDateForInput(currentDate); // Cập nhật giá trị input
+          updateSchedule(currentDate); // Cập nhật bảng lịch
+        }
 
-  // Gắn sự kiện cho nút "Tiếp"
-  btnNext.addEventListener("click", function () {
-    adjustWeek(7); // Tăng 1 tuần
-  });
+        // Hàm định dạng ngày cho input (YYYY-MM-DD)
+        function formatDateForInput(date) {
+          const day = String(date.getDate()).padStart(2, "0");
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const year = date.getFullYear();
+          return `${year}-${month}-${day}`;
+        }
 
-  // Hàm điều chỉnh tuần
-  function adjustWeek(days) {
-    const currentDate = new Date(dateInput.value); // Ngày hiện tại trong input
-    currentDate.setDate(currentDate.getDate() + days); // Điều chỉnh số ngày
-    dateInput.value = formatDateForInput(currentDate); // Cập nhật giá trị input
-    updateSchedule(currentDate); // Cập nhật bảng lịch
-  }
+        dateInput.addEventListener("change", function () {
+          const selectedDate = new Date(this.value);
+          if (isNaN(selectedDate)) {
+            console.error("Ngày không hợp lệ:", this.value);
+            return;
+          }
+          updateSchedule(selectedDate);
+        });
 
-  // Hàm định dạng ngày cho input (YYYY-MM-DD)
-  function formatDateForInput(date) {
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${year}-${month}-${day}`;
-  }
+        // Hàm định dạng ngày cho bảng (DD-MM-YYYY)
+        function formatDateForTable(date) {
+          const day = String(date.getDate()).padStart(2, "0");
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const year = date.getFullYear();
+          return `${day}/${month}/${year}`;
+        }
 
-dateInput.addEventListener("change", function () {
-  const selectedDate = new Date(this.value);
-  if (isNaN(selectedDate)) {
-    console.error("Ngày không hợp lệ:", this.value);
-    return;
-  }
-  updateSchedule(selectedDate);
-});
+        function updateSchedule(baseDate) {
+          if (isNaN(baseDate)) {
+            console.error("Ngày không hợp lệ:", baseDate);
+            return;
+          }
 
+          const dayOfWeek = baseDate.getDay(); // Lấy thứ (0: CN, 6: T7)
+          const startOfWeek = new Date(baseDate);
 
-  // Hàm định dạng ngày cho bảng (DD-MM-YYYY)
-  function formatDateForTable(date) {
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
+          // Tính ngày Thứ 2 đầu tuần
+          startOfWeek.setDate(
+            baseDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)
+          );
 
-  function updateSchedule(baseDate) {
-  if (isNaN(baseDate)) {
-    console.error("Ngày không hợp lệ:", baseDate);
-    return;
-  }
+          // Lấy các tiêu đề của bảng
+          const headers = document.querySelectorAll(".schedule-table thead th");
 
-  const dayOfWeek = baseDate.getDay(); // Lấy thứ (0: CN, 6: T7)
-  const startOfWeek = new Date(baseDate);
+          if (headers.length < 8) {
+            console.error("Cấu trúc bảng lịch không đủ cột tiêu đề");
+            return;
+          }
 
-  // Tính ngày Thứ 2 đầu tuần
-  startOfWeek.setDate(baseDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-
-  // Lấy các tiêu đề của bảng
-  const headers = document.querySelectorAll(".schedule-table thead th");
-
-  if (headers.length < 8) {
-    console.error("Cấu trúc bảng lịch không đủ cột tiêu đề");
-    return;
-  }
-
-  // Cập nhật nội dung các ô tiêu đề
-  for (let i = 1; i <= 7; i++) {
-    const currentDay = new Date(startOfWeek);
-    currentDay.setDate(startOfWeek.getDate() + (i - 1));
-    headers[i].innerHTML = `Thứ ${i + 1}<br>${formatDateForTable(currentDay)}`;
-  }
-}
-
-});
-
-
+          // Cập nhật nội dung các ô tiêu đề
+          for (let i = 1; i <= 7; i++) {
+            const currentDay = new Date(startOfWeek);
+            currentDay.setDate(startOfWeek.getDate() + (i - 1));
+            headers[i].innerHTML = `Thứ ${i + 1}<br>${formatDateForTable(
+              currentDay
+            )}`;
+          }
+        }
+      });
     </script>
   </body>
 </html>
