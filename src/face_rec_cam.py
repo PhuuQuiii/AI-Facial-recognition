@@ -59,7 +59,12 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', help='Path of the video you want to test on.', default=0)
+    parser.add_argument("date", type=str, help="Date in YYYY-MM-DD format")
+    parser.add_argument("classId", type=str, help="Class ID")
     args = parser.parse_args()
+    
+    date = args.date
+    classId = args.classId
 
     MINSIZE = 20
     THRESHOLD = [0.6, 0.7, 0.7]
@@ -156,7 +161,7 @@ def main():
                                     cv2.putText(frame, str(round(best_class_probabilities[0], 3)), (text_x, text_y + 17),
                                                 cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), thickness=1, lineType=2)
                                     
-                                    socketio_client.emit('response', {"MSSV": best_name})
+                                    socketio_client.emit('response', {"MSSV": best_name, "date": date, "classId": classId})
 
                                     # # Gửi thông báo qua SocketIO nếu chưa điểm danh hôm nay
                                     # if check_attendance(best_name):

@@ -142,7 +142,7 @@ def handle_disconnect():
 def handle_response(data):
 
     if 'MSSV' in data:
-        emit('response', { "message": f"(MSSV: {data['MSSV']}) đã điểm danh."
+        emit('response', { "message": f"MSSV: {data['MSSV']} thuộc lớp {data['classId']} đã điểm danh vào ngày {data['date']}."
                 }, broadcast=True)
     #     student_info = get_student_info(data['MSSV'])
     #     if student_info:
@@ -369,8 +369,11 @@ def train_model():
 @app.route('/open_camera')
 def open_camera():
     try:
+        date = "2024-11-24"
+        classId = "C207"
         # Chạy lệnh mở camera
-        process = subprocess.Popen(['python', 'face_rec_cam.py'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(['python', 'face_rec_cam.py', date, classId], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #process = subprocess.Popen(['python', 'face_rec_cam.py'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         if process.returncode != 0:
             raise Exception(stderr.decode('utf-8'))

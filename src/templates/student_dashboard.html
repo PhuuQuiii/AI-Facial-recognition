@@ -129,6 +129,12 @@
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
       const socket = io();
+      socket.on("response", function (data) {
+            if (data.message) {
+              showNotification(data.message);
+              console.log("Message from server:", data.message);
+            }
+      });
       // Gọi API cam python
       async function openCamera(element) {
         // Gọi API để mở camera
@@ -136,11 +142,6 @@
         const data = await response.json();
         if (data.success) {
           // Lắng nghe sự kiện từ socket
-          socket.on("response", function (data) {
-            if (data.message) {
-              showNotification(data.message);
-            }
-          });
         } else {
           console.error("Không thể mở camera:", data.message);
         }
@@ -148,7 +149,7 @@
       function stopCamera(video) {
         const stream = video.srcObject;
         const tracks = stream.getTracks();
-
+      }
       function showNotification(message) {
         const notification = document.createElement("div");
         notification.className = "notification";
