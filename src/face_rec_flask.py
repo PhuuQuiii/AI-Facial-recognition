@@ -575,7 +575,7 @@ def weekly_schedule():
 
         # Lấy thông tin lịch học
         cursor.execute("""
-            SELECT c.name, c.id_class, a.startTime, a.endTime, a.date, c.room, t.name 
+            SELECT c.name, c.id_class, a.startTime, a.endTime, a.date, a.status, c.room, t.name 
             FROM class c
             JOIN attendance a ON c.id_class = a.class_id
             JOIN teacher t ON c.teacher_id = t.MSGV
@@ -603,8 +603,9 @@ def weekly_schedule():
                 "endPeriod": end_period,
                 "period": determine_period(cls[2]),
                 "date": cls[4].strftime('%Y-%m-%d'),
-                "room": cls[5],
-                "teacher": cls[6]
+                "status": cls[5],
+                "room": cls[6],
+                "teacher": cls[7]
             })
 
         return jsonify({"success": True, "schedule": result})
