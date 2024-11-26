@@ -23,11 +23,14 @@ from flask_socketio import SocketIO
 from socketio import Client
 from dotenv import load_dotenv
 import datetime
+import socketio
 
 # Khởi tạo Flask app
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
-socketio_client = Client()
+socketio_client = socketio.Client()
+
+attendance_success = False
 
 # attendance_log = {}
 
@@ -48,7 +51,15 @@ socketio_client = Client()
 #         print(f"Sinh viên {MSSV} được điểm danh.")
 #         return True
 
+
+@socketio_client.on('stop_camera')
+def on_stop_camera(data):
+    print("Stopping camera...")
+    sys.exit(0)
+
 def main():
+
+    attendance_success = False
     # Kết nối đến server
     try:
         socketio_client.connect('http://127.0.0.1:5000')
@@ -161,7 +172,8 @@ def main():
                                     cv2.putText(frame, str(round(best_class_probabilities[0], 3)), (text_x, text_y + 17),
                                                 cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), thickness=1, lineType=2)
                                     
-                                    socketio_client.emit('response', {"MSSV": best_name, "date": date, "classId": classId})
+                                    socketio_client.emit('response', {"success": True,"MSSV": best_name, "date": date, "classId": classId},)
+                                    attendance_success = True
 
                                     # # Gửi thông báo qua SocketIO nếu chưa điểm danh hôm nay
                                     # if check_attendance(best_name):
@@ -176,7 +188,7 @@ def main():
                     print(f"Error processing frame: {e}")
 
                 cv2.imshow('Face Recognition', frame)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
+                if cv2.waitKey(1) & 0xFF == ord('q') or attendance_success:
                     break
 
             cap.release()

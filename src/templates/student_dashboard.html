@@ -128,24 +128,77 @@
     </footer>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
-      const socket = io();
-      socket.on("response", function (data) {
-            if (data.message) {
-              showNotification(data.message);
-              console.log("Message from server:", data.message);
+
+        function updateAttendance(mssv, status, classId, date, element) {
+              const formattedDate = new Date(date).toISOString().split('T')[0];
+              fetch("/update_attendance", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  MSSV: mssv,
+                  status: status,
+                  class_id: classId,
+                  date: formattedDate,
+                }),
+              })
+                .then((response) => response.json())
+                .then((data) => {
+                  if (data.success) {
+                    console.log("Attendance updated successfully");
+                    const row = element.closest('tr');
+                    const statusCell = row.cells[2];
+                    if (status === 'Absent') {
+                      statusCell.innerHTML = '<i class="icon-cancel"></i>';
+                    } else {
+                      statusCell.innerHTML = '<i class="icon-tick"></i>';
+                    }
+                  } else {
+                    console.error("Error updating attendance");
+                  }
+                });
             }
-      });
+
+      const socket = io();
       // Gọi API cam python
-      async function openCamera(element) {
-        // Gọi API để mở camera
-        const response = await fetch("/open_camera");
-        const data = await response.json();
-        if (data.success) {
-          // Lắng nghe sự kiện từ socket
-        } else {
-          console.error("Không thể mở camera:", data.message);
+      async function openCamera(classId, date, element) {
+
+        try {
+          socket.on("response", function (data){
+              if (data.message) {
+                console.log("Attendance marked successfully.");
+                element.innerHTML ='';
+                element.classList.add('icon-tick');
+                mssv = data.MSSV;
+                status = "Present";
+                classId = data.classId;
+                date = data.date;
+                updateAttendance(mssv, status, classId, date, "");
+                socket.emit('stop_camera', { success: true });
+              } else {
+                console.error("Attendance marking failed:", response.message);
+              }
+            });
+          // Gọi API để mở camera
+          const response = await fetch("/open_camera", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              classId,
+              date,
+            }),
+          });
+          const data = await response.json();
+          console.log("Camera opened successfully.");
+            // Lắng nghe sự kiện từ socket
+        } catch (error) {
+          console.error("Lỗi khi mở camera:", error);
         }
       }
+
       function stopCamera(video) {
         const stream = video.srcObject;
         const tracks = stream.getTracks();

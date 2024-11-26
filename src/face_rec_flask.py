@@ -142,9 +142,7 @@ def handle_disconnect():
 def handle_response(data):
 
     if 'MSSV' in data:
-        emit('response', { "message": f"MSSV: {data['MSSV']} thuộc lớp {data['classId']} đã điểm danh vào ngày {data['date']}."
-                }, broadcast=True)
-    #     student_info = get_student_info(data['MSSV'])
+        emit('response', { "message": f"MSSV: {data['MSSV']} thuộc lớp {data['classId']} đã điểm danh vào ngày {data['date']}", "MSSV": data['MSSV'], "classId": data['classId'], "date": data['date'] }, broadcast=True)    #     student_info = get_student_info(data['MSSV'])
     #     if student_info:
     #         # Lấy class_id từ cơ sở dữ liệu
     #         class_id = get_class_id_by_student_id(student_info["MSSV"])
@@ -366,11 +364,12 @@ def train_model():
         return jsonify({"success": False, "message": str(e)})
 
 # Cam Python
-@app.route('/open_camera')
+@app.route('/open_camera', methods=['POST'])
 def open_camera():
     try:
-        date = "2024-11-24"
-        classId = "C207"
+        data = request.get_json()
+        date = data.get('date')
+        classId = data.get('classId')
         # Chạy lệnh mở camera
         process = subprocess.Popen(['python', 'face_rec_cam.py', date, classId], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         #process = subprocess.Popen(['python', 'face_rec_cam.py'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)

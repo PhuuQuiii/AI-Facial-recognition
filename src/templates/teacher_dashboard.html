@@ -323,6 +323,11 @@ function loadStudents(classId, weekValue) {
     socket.on("response", function (data) {
       if (data.message) {
         showNotification(data.message);
+        mssv = data.MSSV;
+        status = "Present";
+        classId = data.classId;
+        date = data.date;
+        updateAttendance(mssv, status, classId, date, "");
       }
     });
 
