@@ -252,6 +252,9 @@
             baseDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)
           );
 
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 6);
+
           // Lấy các tiêu đề của bảng
           const headers = document.querySelectorAll(".schedule-table thead th");
 
@@ -259,6 +262,7 @@
             console.error("Cấu trúc bảng lịch không đủ cột tiêu đề");
             return;
           }
+
 
           // Cập nhật nội dung các ô tiêu đề
           for (let i = 1; i <= 7; i++) {
@@ -268,6 +272,98 @@
               currentDay
             )}`;
           }
+          const scheduleTableBody = document.querySelector(".schedule-table tbody");
+          scheduleTableBody.innerHTML = ""; // Xóa nội dung cũ
+
+          console.log(studentInfo.student_id, startOfWeek, endOfWeek);
+          // Gọi API để lấy lịch học, lịch thi
+          fetch("/weekly_schedule", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              studentId: studentInfo.student_id,
+              startDate: startOfWeek.toISOString().split("T")[0],
+              endDate: endOfWeek.toISOString().split("T")[0],
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                console.log("Lịch học:", data.schedule);
+
+                // Lặp qua từng buổi (Sáng, Chiều, Tối)
+                ["Sáng", "Chiều", "Tối"].forEach((period) => {
+                  const row = document.createElement("tr");
+                  row.innerHTML = `<td class="td_ca"><b>${period}</b></td>`;
+
+                  // Lặp qua từng ngày trong tuần (Thứ 2 -> Chủ nhật)
+                  for (let i = 0; i < 7; i++) {
+                    const currentDay = new Date(startOfWeek);
+                    currentDay.setDate(startOfWeek.getDate() + i);
+                    const dayString = currentDay.toISOString().split("T")[0];
+
+                    console.log("Ngày hiện tại:", dayString);
+
+                    // Lấy dữ liệu theo ngày và buổi
+                    const classes = data.schedule.filter(
+                      (cls) => cls.date === dayString && cls.period === period
+                    );
+
+                    if (classes.length > 0) {
+                      const classInfo = classes
+                        .map(
+                          (cls) => `
+                            <div class="class-box">
+                              <div>
+                                <strong>${cls.name}</strong><br />
+                                ${cls.classId}<br />
+                                Tiết: ${cls.startPeriod} - ${cls.endPeriod}<br />
+                                Giờ: ${cls.startTime} - ${cls.endTime}<br />
+                                Phòng: ${cls.room}<br />
+                                GV: ${cls.teacher}
+                              </div>
+                              <div class="icon-camera" onclick="openCamera('${cls.classId}', '${cls.date}',this)">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke-width="1.5"
+                                  stroke="currentColor"
+                                  class="size-6"
+                                >
+                                  <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"
+                                  />
+                                  <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"
+                                  />
+                                </svg>
+                              </div>
+                            </div>
+                          `
+                        )
+                        .join("");
+                      row.innerHTML += `<td>${classInfo}</td>`;
+                    } else {
+                      row.innerHTML += `<td></td>`;
+                    }
+                  }
+
+                  scheduleTableBody.appendChild(row);
+                });
+              } else {
+                console.error("Không thể lấy lịch học:", data.message);
+              }
+            })
+            .catch((error) => {
+              console.error("Lỗi khi lấy lịch học, lịch thi:", error);
+            });
         }
       });
     </script>

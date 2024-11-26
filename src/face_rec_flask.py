@@ -9,7 +9,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 load_dotenv() 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import base64
 import subprocess
 import cv2
@@ -512,5 +512,105 @@ def open_camera():
 
 #     emit('response', {"status": "no_face_detected"})
 
+def timedelta_to_string(td):
+    total_seconds = int(td.total_seconds())
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{hours:02}:{minutes:02}:{seconds:02}"
+
+def timedelta_to_time(td):
+    if isinstance(td, timedelta):
+        # Chuyển timedelta sang time
+        total_seconds = int(td.total_seconds())
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return time(hours, minutes, seconds)
+    return td  # Nếu không phải timedelta, trả về giá trị gốc
+
+def determine_period(start_time):
+    # Chuyển đổi start_time sang datetime.time nếu cần
+    start_time = timedelta_to_time(start_time)
+
+    if time(7, 0) <= start_time <= time(11, 25):
+        return "Sáng"
+    elif time(12, 0) <= start_time <= time(16, 25):
+        return "Chiều"
+    elif time(17, 0) <= start_time <= time(20, 50):
+        return "Tối"
+    return "Ngoài giờ"
+
+time_slots = [
+    time(7, 0), time(7, 50), time(8, 55), time(9, 45), time(10, 35),  # Sáng
+    time(12, 0), time(12, 50), time(13, 55), time(14, 45), time(15, 35),  # Chiều
+    time(16, 25), time(17, 15), time(18, 20), time(19, 10), time(20, 0), time(20, 50)  # Tối
+]
+
+def get_lesson_index(start_time, end_time, time_slots):
+    start_period = -1
+    end_period = -1
+
+    # Tìm tiết bắt đầu
+    for i in range(len(time_slots) - 1):
+        if time_slots[i] <= start_time < time_slots[i + 1]:
+            start_period = i + 1
+            break
+
+    # Tìm tiết kết thúc
+    for i in range(len(time_slots) - 1):
+        if time_slots[i] <= end_time <= time_slots[i + 1]:
+            end_period = i + 1
+            break
+
+    return start_period, end_period
+@app.route('/weekly_schedule', methods=['POST']) 
+def weekly_schedule():
+    try:
+        data = request.get_json()
+        mssv = data['studentId']
+        start_date = data['startDate']
+        end_date = data['endDate']
+
+        # Kết nối cơ sở dữ liệu
+        connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
+        cursor = connection.cursor()
+
+        # Lấy thông tin lịch học
+        cursor.execute("""
+            SELECT c.name, c.id_class, a.startTime, a.endTime, a.date, c.room, t.name 
+            FROM class c
+            JOIN attendance a ON c.id_class = a.class_id
+            JOIN teacher t ON c.teacher_id = t.MSGV
+            WHERE a.student_id = %s AND a.date BETWEEN %s AND %s
+        """, (mssv, start_date, end_date))
+
+        schedule = cursor.fetchall()
+
+        cursor.close()
+        connection.close()
+
+
+        # Tính tiết học
+        result = []
+        for cls in schedule:
+            start_time = timedelta_to_time(cls[2])
+            end_time = timedelta_to_time(cls[3])
+            start_period, end_period = get_lesson_index(start_time, end_time, time_slots)
+            result.append({
+                "name": cls[0],
+                "classId": cls[1],
+                "startTime": start_time.strftime('%H:%M'),
+                "endTime": end_time.strftime('%H:%M'),
+                "startPeriod": start_period,
+                "endPeriod": end_period,
+                "period": determine_period(cls[2]),
+                "date": cls[4].strftime('%Y-%m-%d'),
+                "room": cls[5],
+                "teacher": cls[6]
+            })
+
+        return jsonify({"success": True, "schedule": result})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+    
 if __name__ == '__main__':
     socketio.run(app, debug=True)
