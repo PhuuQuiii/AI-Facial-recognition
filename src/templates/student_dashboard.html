@@ -128,24 +128,76 @@
     </footer>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
+      function updateAttendance(mssv, status, classId, date, element) {
+        const formattedDate = new Date(date).toISOString().split("T")[0];
+        fetch("/update_attendance", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            MSSV: mssv,
+            status: status,
+            class_id: classId,
+            date: formattedDate,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              console.log("Attendance updated successfully");
+              const row = element.closest("tr");
+              const statusCell = row.cells[2];
+              if (status === "Absent") {
+                statusCell.innerHTML = '<i class="icon-cancel"></i>';
+              } else {
+                statusCell.innerHTML = '<i class="icon-tick"></i>';
+              }
+            } else {
+              console.error("Error updating attendance");
+            }
+          });
+      }
+
       const socket = io();
-      socket.on("response", function (data) {
-        if (data.message) {
-          showNotification(data.message);
-          console.log("Message from server:", data.message);
-        }
-      });
+
       // Gọi API cam python
-      async function openCamera(element) {
-        // Gọi API để mở camera
-        const response = await fetch("/open_camera");
-        const data = await response.json();
-        if (data.success) {
+      async function openCamera(classId, date, element) {
+        try {
+          socket.on("response", function (data) {
+            if (data.message) {
+              console.log("Attendance marked successfully.");
+              element.innerHTML = "";
+              element.classList.add("icon-tick");
+              mssv = data.MSSV;
+              status = "Present";
+              classId = data.classId;
+              date = data.date;
+              updateAttendance(mssv, status, classId, date, "");
+              socket.emit("stop_camera", { success: true });
+            } else {
+              console.error("Attendance marking failed:", response.message);
+            }
+          });
+          // Gọi API để mở camera
+          const response = await fetch("/open_camera", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              classId,
+              date,
+            }),
+          });
+          const data = await response.json();
+          console.log("Camera opened successfully.");
           // Lắng nghe sự kiện từ socket
-        } else {
-          console.error("Không thể mở camera:", data.message);
+        } catch (error) {
+          console.error("Lỗi khi mở camera:", error);
         }
       }
+
       function showNotification(message) {
         const notification = document.createElement("div");
         notification.className = "notification";
@@ -248,6 +300,9 @@
             baseDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)
           );
 
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 6);
+
           // Lấy các tiêu đề của bảng
           const headers = document.querySelectorAll(".schedule-table thead th");
 
@@ -264,6 +319,106 @@
               currentDay
             )}`;
           }
+          const scheduleTableBody = document.querySelector(
+            ".schedule-table tbody"
+          );
+          scheduleTableBody.innerHTML = ""; // Xóa nội dung cũ
+
+          console.log(studentInfo.student_id, startOfWeek, endOfWeek);
+          // Gọi API để lấy lịch học, lịch thi
+          fetch("/weekly_schedule", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              studentId: studentInfo.student_id,
+              startDate: startOfWeek.toISOString().split("T")[0],
+              endDate: endOfWeek.toISOString().split("T")[0],
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                console.log("Lịch học:", data.schedule);
+
+                // Lặp qua từng buổi (Sáng, Chiều, Tối)
+                ["Sáng", "Chiều", "Tối"].forEach((period) => {
+                  const row = document.createElement("tr");
+                  row.innerHTML = `<td class="td_ca"><b>${period}</b></td>`;
+
+                  // Lặp qua từng ngày trong tuần (Thứ 2 -> Chủ nhật)
+                  for (let i = 0; i < 7; i++) {
+                    const currentDay = new Date(startOfWeek);
+                    currentDay.setDate(startOfWeek.getDate() + i);
+                    const dayString = currentDay.toISOString().split("T")[0];
+
+                    console.log("Ngày hiện tại:", dayString);
+
+                    // Lấy dữ liệu theo ngày và buổi
+                    const classes = data.schedule.filter(
+                      (cls) => cls.date === dayString && cls.period === period
+                    );
+
+                    if (classes.length > 0) {
+                      const classInfo = classes
+                        .map(
+                          (cls) => `
+                            <div class="class-box">
+                              <div>
+                                <strong>${cls.name}</strong><br />
+                                ${cls.classId}<br />
+                                Tiết: ${cls.startPeriod} - ${
+                            cls.endPeriod
+                          }<br />
+                                Giờ: ${cls.startTime} - ${cls.endTime}<br />
+                                Phòng: ${cls.room}<br />
+                                GV: ${cls.teacher}
+                              </div>
+                              ${
+                                cls.status === "Absent"
+                                  ? `<div class="icon-camera" onclick="openCamera('${cls.classId}', '${cls.date}', this)">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="1.5"
+                                    stroke="currentColor"
+                                    class="size-6"
+                                  >
+                                    <path
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"
+                                    />
+                                    <path
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"
+                                    />
+                                  </svg>
+                                </div>`
+                                  : `<div style="" class="icon-camera icon-tick"></div>`
+                              }
+                            </div>
+                          `
+                        )
+                        .join("");
+                      row.innerHTML += `<td>${classInfo}</td>`;
+                    } else {
+                      row.innerHTML += `<td></td>`;
+                    }
+                  }
+
+                  scheduleTableBody.appendChild(row);
+                });
+              } else {
+                console.error("Không thể lấy lịch học:", data.message);
+              }
+            })
+            .catch((error) => {
+              console.error("Lỗi khi lấy lịch học, lịch thi:", error);
+            });
         }
       });
     </script>
