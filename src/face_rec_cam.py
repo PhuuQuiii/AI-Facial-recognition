@@ -188,7 +188,8 @@ def main():
                     print(f"Error processing frame: {e}")
 
                 cv2.imshow('Face Recognition', frame)
-                if cv2.waitKey(1) & 0xFF == ord('q') or attendance_success:
+                # if cv2.waitKey(1) & 0xFF == ord('q') or attendance_success:
+                if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
 
             cap.release()

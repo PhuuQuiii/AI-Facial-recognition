@@ -283,41 +283,6 @@ def before_request_func():
     print("Received request:", request.url)
     print("Request headers:", request.headers)
 
-@app.route('/check_attendance')
-def check_attendance():
-    student_id = request.args.get('student_id')
-    date = request.args.get('date')
-
-    connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
-    cursor = connection.cursor()
-    cursor.execute("""
-        SELECT COUNT(*) 
-        FROM Attendance 
-        WHERE student_id = %s AND date = %s
-    """, (student_id, date))
-    count = cursor.fetchone()[0]
-    cursor.close()
-    connection.close()
-
-    return jsonify({"exists": count > 0})
-
-@app.route('/delete_attendance', methods=['POST'])
-def delete_attendance():
-    data = request.get_json()
-    mssv = data['MSSV']
-    date = data['date']
-
-    connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
-    cursor = connection.cursor()
-    cursor.execute("""
-        DELETE FROM Attendance 
-        WHERE student_id = %s AND date = %s
-    """, (mssv, date))
-    connection.commit()
-    cursor.close()
-    connection.close()
-
-    return jsonify({"success": True})
 
 @app.route('/save_images', methods=['POST'])
 def save_images():
