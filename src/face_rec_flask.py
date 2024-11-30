@@ -142,7 +142,8 @@ def handle_disconnect():
 def handle_response(data):
 
     if 'MSSV' in data:
-        emit('response', { "message": f"MSSV: {data['MSSV']} thuộc lớp {data['classId']} đã điểm danh vào ngày {data['date']}", "MSSV": data['MSSV'], "classId": data['classId'], "date": data['date'] }, broadcast=True)    #     student_info = get_student_info(data['MSSV'])
+        emit('response', { "message": f"MSSV: {data['MSSV']} thuộc lớp {data['classId']} đã điểm danh vào ngày {data['date']}", "MSSV": data['MSSV'], "classId": data['classId'], "date": data['date'] }, broadcast=True)    
+    #     student_info = get_student_info(data['MSSV'])
     #     if student_info:
     #         # Lấy class_id từ cơ sở dữ liệu
     #         class_id = get_class_id_by_student_id(student_info["MSSV"])
@@ -227,17 +228,17 @@ def get_weeks():
 def get_students():
     class_id = request.args.get('class_id')
     date = request.args.get('week')
+    print(class_id, date)
     connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
     cursor = connection.cursor()
     cursor.execute("""
-        SELECT s.MSSV, s.name, a.date, a.status 
-        FROM Student s
-        JOIN Student_Class sc ON s.MSSV = sc.student_id
-        JOIN Attendance a ON s.MSSV = a.student_id
-        WHERE sc.class_id = %s  AND a.date = %s
+        SELECT s.MSSV, s.name, a.date, a.status, a.class_id
+        FROM student s
+        JOIN attendance a ON s.MSSV = a.student_id
+        WHERE a.class_id = %s  AND a.date = %s
     """, (class_id, date))
     students = cursor.fetchall()
-    return jsonify({"students": [{"MSSV": student[0], "name": student[1], "date": student[2], "status": student[3]} for student in students]})
+    return jsonify({"students": [{"MSSV": student[0], "name": student[1], "date": student[2], "status": student[3], "class_id": student[4]} for student in students]})
 
 def get_student_info(student_id):
     connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')

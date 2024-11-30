@@ -12,9 +12,9 @@
   <header>
     <h1 id="teacherName">Tên Giáo Viên</h1>
     <div style="display: flex; gap: 20px">
-        <h2>Lớp: <span id="className">Lớp hiện tại</span></h2>
+        <h2>Lớp: <span id="className"></span></h2>
         <h2>|</h2>
-        <h2>Phòng: <span id="classRoom">Phòng hiện tại</span></h2>
+        <h2>Phòng: <span id="classRoom"></span></h2>
     </div>
   </header>
 
@@ -25,7 +25,7 @@
           <input type="checkbox" id="tags-toggle" onclick="toggleDropdown(event)">
           <label for="tags-toggle">Lớp</label>
           <ul id="class" class="dropdown">
-              <li>
+              <!-- <li>
                 <label for="class" onclick=""> 010100087204 - Lập trình Python </label>
               </li>
               <li>
@@ -33,7 +33,7 @@
               </li>
               <li>
                 <label for="class" onclick=""> IDClass -  NameClass </label>
-              </li>
+              </li> -->
           </ul>
         </li>
         <li><a href="teacher_dashboard/logout">Đăng xuất</a></li>
@@ -42,9 +42,10 @@
     <div class="main-content">
         <div>
             <select id="week">
+              <option value="">chưa chọn lớp</option>
+              <!-- <option>Tuần 1</option>
               <option>Tuần 1</option>
-              <option>Tuần 1</option>
-              <option>Tuần 1</option>
+              <option>Tuần 1</option> -->
             </select>
         </div>
         <div>
@@ -60,7 +61,7 @@
                       </tr>
                   </thead>
                   <tbody>
-                      <tr>
+                      <!-- <tr>
                         <td>2254810032</td>
                         <td>Nguyễn Văn Phú Quí</td>
                         <td>
@@ -95,7 +96,7 @@
                               </div>
                             </div>
                       </td>
-                      </tr>
+                      </tr> -->
                   </tbody>
               </table>
           </div>
@@ -194,11 +195,12 @@ function toggleAttendanceMenu(element) {
             // Tạo phần tử label và thêm vào listItem
             const label = document.createElement('label');
             label.setAttribute('for', 'class');
+            label.id = `${i.id_class}`;
             label.innerText = `${i.id_class} - ${i.name}`;
 
 
             label.onclick = () => {
-              loadStudents(i.id_class, null);
+              //loadStudents(i.id_class, null);
               loadWeeks(i.id_class); // Gọi hàm loadWeeks khi chọn lớp
               document.getElementById("className").innerText = i.name; // Cập nhật tên lớp
               document.getElementById("classRoom").innerText = i.room; // Cập nhật phòng
@@ -218,18 +220,20 @@ function toggleAttendanceMenu(element) {
         .then((data) => {
           console.log("Weeks data:", data);
           const weekSelect = document.getElementById("week");
-          weekSelect.id = classId;
+          weekSelect.classId = classId;
           weekSelect.innerHTML = ""; // Clear previous data
           if (data.success) {
             data.weeks.forEach((week, index) => {
               const option = document.createElement("option");
               option.value = week.value;
               option.id = classId;
-              option.textContent = week.label;
+              const dateParts = week.value.split('-');
+              option.textContent = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
               weekSelect.appendChild(option);
 
               // Automatically select the first week and load students
               if (index === 0) {
+                console.log("Selected week:", week.value);
                 weekSelect.value = week.value;
                 loadStudents(classId, week.value);
               }
@@ -241,7 +245,7 @@ function toggleAttendanceMenu(element) {
 document.getElementById("week").addEventListener("change", function() {
   const classId = document.getElementById("class").querySelector("label[for='class']").innerText.split(" - ")[0];
   const weekValue = this.value;
-  loadStudents(this.id, weekValue);
+  loadStudents(this.classId, weekValue);
 });
 
 function loadStudents(classId, weekValue) {
