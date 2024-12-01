@@ -143,26 +143,6 @@ def handle_response(data):
 
     if 'MSSV' in data:
         emit('response', { "message": f"MSSV: {data['MSSV']} thuộc lớp {data['classId']} đã điểm danh vào ngày {data['date']}", "MSSV": data['MSSV'], "classId": data['classId'], "date": data['date'] }, broadcast=True)    
-    #     student_info = get_student_info(data['MSSV'])
-    #     if student_info:
-    #         # Lấy class_id từ cơ sở dữ liệu
-    #         class_id = get_class_id_by_student_id(student_info["MSSV"])
-    #         if class_id:
-    #             # Cập nhật điểm danh
-    #             date = str(datetime.date.today())  # Lấy ngày hiện tại
-    #             update_attendance(student_info["MSSV"], class_id, date, "Present")  # Gọi hàm với các tham số cần thiết
-                
-    #             emit('response', {
-    #                 "MSSV": student_info["MSSV"],
-    #                 "name": student_info["name"],
-    #                 "message": f"Sinh viên {student_info['name']} (MSSV: {student_info['MSSV']}) đã điểm danh."
-    #             }, broadcast=True)
-    #         else:
-    #             emit('response', {"error": "Class ID not found"}, broadcast=True)
-    #     else:
-    #         emit('response', {"error": "Student not found"}, broadcast=True)
-    # else:
-    #     emit('response', {"error": "MSSV không được cung cấp"}, broadcast=True)
     
 
 def get_class_id_by_student_id(student_id): # lấy class_id từ cơ sở dữ liệu
@@ -240,17 +220,17 @@ def get_students():
     students = cursor.fetchall()
     return jsonify({"students": [{"MSSV": student[0], "name": student[1], "date": student[2], "status": student[3], "class_id": student[4]} for student in students]})
 
-def get_student_info(student_id):
-    connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
-    cursor = connection.cursor()
-    cursor.execute("SELECT MSSV, name FROM Student WHERE MSSV = %s", (student_id,))
-    student = cursor.fetchone()
-    if student:
-        return {
-            "MSSV": student[0],
-            "name": student[1],
-        }
-    return {"error": "Student not found"}
+# def get_student_info(student_id):
+#     connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
+#     cursor = connection.cursor()
+#     cursor.execute("SELECT MSSV, name FROM Student WHERE MSSV = %s", (student_id,))
+#     student = cursor.fetchone()
+#     if student:
+#         return {
+#             "MSSV": student[0],
+#             "name": student[1],
+#         }
+#     return {"error": "Student not found"}
 
 @app.route('/update_attendance', methods=['POST'])
 def update_attendance():
