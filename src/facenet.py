@@ -399,8 +399,8 @@ def split_dataset(dataset, split_ratio, min_nrof_images_per_class, mode):
     return train_set, test_set
 
 def load_model(model, input_map=None):
-    # Check if the model is a model directory (containing a metagraph and a checkpoint file)
-    #  or if it is a protobuf file with a frozen graph
+    # Kiểm tra xem mô hình có phải là một thư mục mô hình (chứa tệp metagraph và tệp checkpoint)
+    # hoặc nếu nó là một tệp protobuf với đồ thị đã được đóng băng 
     model_exp = os.path.expanduser(model)
     if (os.path.isfile(model_exp)):
         print('Model filename: %s' % model_exp)
