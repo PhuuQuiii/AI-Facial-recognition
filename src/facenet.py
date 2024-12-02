@@ -405,9 +405,10 @@ def load_model(model, input_map=None):
     if (os.path.isfile(model_exp)):
         print('Model filename: %s' % model_exp)
         with gfile.FastGFile(model_exp,'rb') as f:
-            graph_def = tf.compat.v1.GraphDef()
-            graph_def.ParseFromString(f.read())
-            tf.import_graph_def(graph_def, input_map=input_map, name='')
+            graph_def = tf.compat.v1.GraphDef() # Tạo một đối tượng biểu diễn đồ thị tính toán (Graph Definition) từ tệp protobuf.
+            graph_def.ParseFromString(f.read()) # Phân tích nội dung của tệp protobuf và nạp vào đối tượng graph_def
+            tf.import_graph_def(graph_def, input_map=input_map, name='') # Nhập đồ thị từ graph_def vào đồ thị TensorFlow hiện tại.
+
     else:
         print('Model directory: %s' % model_exp)
         meta_file, ckpt_file = get_model_filenames(model_exp)

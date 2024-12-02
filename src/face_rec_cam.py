@@ -85,7 +85,7 @@ def main():
     CLASSIFIER_PATH = '../Models/facemodel.pkl'
     # CLASSIFIER_PATH = 'Models/facemodel.pkl'
     VIDEO_PATH = args.path
-    FACENET_MODEL_PATH = '../Models/20180402-114759.pb'
+    FACENET_MODEL_PATH = '../Models/20180402-114759.pb' # Tệp Protobuf là tệp tuần tự hóa dữ liệu, tối ưu cho việc lưu trữ và trao đổi dữ liệu nhanh chóng.
     # FACENET_MODEL_PATH = 'Models/20180402-114759.pb'
 
     # Tải mô hình phân loại khuôn mặt từ file pickle
@@ -104,10 +104,10 @@ def main():
             facenet.load_model(FACENET_MODEL_PATH)
 
             # Lấy các tensor đầu vào và đầu ra từ mô hình.
-            images_placeholder = tf.compat.v1.get_default_graph().get_tensor_by_name("input:0")
-            embeddings = tf.compat.v1.get_default_graph().get_tensor_by_name("embeddings:0")
-            phase_train_placeholder = tf.compat.v1.get_default_graph().get_tensor_by_name("phase_train:0")
-            embedding_size = embeddings.get_shape()[1]
+            images_placeholder = tf.compat.v1.get_default_graph().get_tensor_by_name("input:0") # Đây là tensor đầu vào của mô hình, được sử dụng để nhận các hình ảnh khuôn mặt mà bạn muốn xử lý. Tensor này thường có kích thước (None, 160, 160, 3), trong đó 160 là kích thước của hình ảnh (chiều cao và chiều rộng), và 3 là số kênh màu (RGB).
+            embeddings = tf.compat.v1.get_default_graph().get_tensor_by_name("embeddings:0") # Đây là tensor đầu ra của mô hình, chứa các đặc trưng (embeddings) của khuôn mặt sau khi được xử lý. Mỗi khuôn mặt sẽ được biểu diễn bằng một vector đặc trưng có kích thước cố định (ví dụ: 128 hoặc 512 chiều, tùy thuộc vào cấu hình của mô hình).
+            phase_train_placeholder = tf.compat.v1.get_default_graph().get_tensor_by_name("phase_train:0") # Đây là tensor được sử dụng để chỉ định chế độ hoạt động của mô hình (huấn luyện hoặc suy diễn). Khi phase_train_placeholder được đặt là False, mô hình sẽ hoạt động ở chế độ suy diễn, không cập nhật trọng số.
+            embedding_size = embeddings.get_shape()[1] # Đây là kích thước của vector đặc trưng (embeddings) mà mô hình tạo ra. Nó được lấy từ hình dạng của tensor embeddings, cho phép bạn biết số chiều của vector đặc trưng mà bạn sẽ làm việc với.
 
             #  Tạo các mạng MTCNN để phát hiện khuôn mặt.
             pnet, rnet, onet = align.detect_face.create_mtcnn(sess, "../src/align")
@@ -121,7 +121,7 @@ def main():
                 # Vòng lặp chính để đọc từng khung hình từ camera, thay đổi kích thước và lật khung hình.
                 frame = cap.read()
                 frame = imutils.resize(frame, width=600)
-                frame = cv2.flip(frame, 1)
+                frame = cv2.flip(frame, 1) # 1: Lật ngang (trái <-> phải)-- lật ngang sẽ giúp hiển thị đúng như nhìn qua gương
 
                 # Phát hiện khuôn mặt trong khung hình.
                 bounding_boxes, _ = align.detect_face.detect_face(frame, MINSIZE, pnet, rnet, onet, THRESHOLD, FACTOR)
