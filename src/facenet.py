@@ -77,6 +77,8 @@ from tensorflow.python.platform import gfile
 import math
 from six import iteritems
 
+# Tính Toán Hàm Mất Mát
+# Hàm triplet_loss và center_loss:Những hàm này được sử dụng trong quá trình huấn luyện mô hình để tối ưu hóa các đặc trưng khuôn mặt. Chúng giúp mô hình học cách phân biệt giữa các khuôn mặt khác nhau bằng cách tối ưu hóa khoảng cách giữa các embedding của các khuôn mặt tương tự và khác nhau.
 def triplet_loss(anchor, positive, negative, alpha):
     """Calculate the triplet loss according to the FaceNet paper
     
@@ -112,6 +114,7 @@ def center_loss(features, label, alfa, nrof_classes):
         loss = tf.reduce_mean(tf.square(features - centers_batch))
     return loss, centers
 
+# Quản Lý Dữ Liệu: Hàm get_image_paths_and_labels và get_dataset: Những hàm này giúp bạn quản lý và chuẩn bị dữ liệu đầu vào cho mô hình, bao gồm việc lấy đường dẫn hình ảnh và nhãn từ tập dữ liệu.
 def get_image_paths_and_labels(dataset):
     image_paths_flat = []
     labels_flat = []
@@ -245,7 +248,7 @@ def train(total_loss, global_step, optimizer, learning_rate, moving_average_deca
         train_op = tf.no_op(name='train')
   
     return train_op
-
+# Tiền Xử Lý Dữ Liệu: Hàm prewhiten: Hàm này chuẩn hóa hình ảnh đầu vào để có trung bình bằng 0 và độ lệch chuẩn bằng 1. Việc này rất quan trọng để cải thiện độ chính xác của mô hình trong việc nhận diện khuôn mặt.
 def prewhiten(x):
     mean = np.mean(x)
     std = np.std(x)
@@ -315,6 +318,7 @@ def get_batch(image_data, batch_size, batch_index):
     batch_float = batch.astype(np.float32)
     return batch_float
 
+#  Tạo Batch Dữ Liệu: Hàm get_triplet_batch: Hàm này tạo ra các batch dữ liệu cho quá trình huấn luyện, bao gồm các bộ ba (anchor, positive, negative) để tính toán hàm mất mát triplet.
 def get_triplet_batch(triplets, batch_index, batch_size):
     ax, px, nx = triplets
     a = get_batch(ax, int(batch_size/3), batch_index)
@@ -350,7 +354,8 @@ class ImageClass():
   
     def __len__(self):
         return len(self.image_paths)
-  
+
+# Quản Lý Dữ Liệu: get_dataset: Những hàm này giúp bạn quản lý và chuẩn bị dữ liệu đầu vào cho mô hình, bao gồm việc lấy đường dẫn hình ảnh và nhãn từ tập dữ liệu.
 def get_dataset(path, has_class_directories=True):
     dataset = []
     path_exp = os.path.expanduser(path)
@@ -442,7 +447,8 @@ def get_model_filenames(model_dir):
                 max_step = step
                 ckpt_file = step_str.groups()[0]
     return meta_file, ckpt_file
-  
+
+# Tính Toán Khoảng Cách: Hàm distance: Sau khi bạn đã có các vector đặc trưng từ mô hình, bạn cần tính toán khoảng cách giữa các vector này để xác định độ tương đồng giữa các khuôn mặt. Hàm này hỗ trợ tính toán khoảng cách Euclidean hoặc độ tương đồng cosine.
 def distance(embeddings1, embeddings2, distance_metric=0):
     if distance_metric==0:
         # Tính khoảng cách Euclidean
@@ -459,6 +465,7 @@ def distance(embeddings1, embeddings2, distance_metric=0):
         
     return dist
 
+# Đánh Giá Mô Hình: Hàm calculate_roc, calculate_val, và calculate_accuracy: Những hàm này được sử dụng để đánh giá hiệu suất của mô hình. Chúng giúp bạn xác định độ chính xác, tỷ lệ chấp nhận sai (FAR), và các chỉ số khác trong quá trình nhận diện khuôn mặt.
 def calculate_roc(thresholds, embeddings1, embeddings2, actual_issame, nrof_folds=10, distance_metric=0, subtract_mean=False):
     assert(embeddings1.shape[0] == embeddings2.shape[0])
     assert(embeddings1.shape[1] == embeddings2.shape[1])

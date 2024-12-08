@@ -159,13 +159,12 @@ def main(args):
                             print('Unable to align "%s"' % image_path)
                             text_file.write('%s\n' % (output_filename))
                             
-    print('Total number of images: %d' % nrof_images_total)
-    print('Number of successfully aligned images: %d' % nrof_successfully_aligned)
+    print('Total number of images: %d' % nrof_images_total) # Tổng số hình ảnh
+    print('Number of successfully aligned images: %d' % nrof_successfully_aligned) # Số lượng hình ảnh được căn chỉnh thành công
             
 
 def parse_arguments(argv):
     parser = argparse.ArgumentParser()
-    
     parser.add_argument('input_dir', type=str, help='Directory with unaligned images.')
     parser.add_argument('output_dir', type=str, help='Directory with aligned face thumbnails.')
     parser.add_argument('--image_size', type=int,

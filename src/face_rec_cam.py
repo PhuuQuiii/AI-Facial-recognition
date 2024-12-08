@@ -98,7 +98,7 @@ def main():
         gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.6)
         sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options, log_device_placement=False))
 
-        with sess.as_default():
+        with sess.as_default(): # khởi tạo một phiên làm việc (session) cho mô hình Facenet và lấy các tensor cần thiết:
             #  Tải mô hình Facenet để trích xuất đặc trưng khuôn mặt.
             print('Loading feature extraction model')
             facenet.load_model(FACENET_MODEL_PATH)
@@ -156,8 +156,8 @@ def main():
                                 scaled_reshape = scaled.reshape(-1, INPUT_IMAGE_SIZE, INPUT_IMAGE_SIZE, 3)
 
                                 # Trích xuất đặc trưng khuôn mặt bằng cách chạy mô hình
-                                feed_dict = {images_placeholder: scaled_reshape, phase_train_placeholder: False}
-                                emb_array = sess.run(embeddings, feed_dict=feed_dict)
+                                feed_dict = {images_placeholder: scaled_reshape, phase_train_placeholder: False} # Đặt False ( ở chế độ phân loại)
+                                emb_array = sess.run(embeddings, feed_dict=feed_dict) # Phương thức này sẽ chạy tensor embeddings trong phiên làm việc TensorFlow, trả về các đặc trưng khuôn mặt.
 
                                 # Dự đoán khuôn mặt bằng mô hình SVM và lấy tên của người được nhận diện.
                                 predictions = model.predict_proba(emb_array)
