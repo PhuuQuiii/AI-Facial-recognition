@@ -317,11 +317,12 @@ def open_camera():
         date = data.get('date')
         classId = data.get('classId')
         # Chạy lệnh mở camera
-        process = subprocess.Popen(['python', 'face_rec_cam.py', date, classId], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # process = subprocess.Popen(['python', 'face_rec_cam.py', date, classId], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(['python', 'src/face_rec_cam.py', date, classId], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
         #process = subprocess.Popen(['python', 'face_rec_cam.py'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         if process.returncode != 0:
-            raise Exception(stderr.decode('utf-8'))
+            raise Exception(stderr.decode('utf-8', errors='ignore'))
         return jsonify({"success": True})
     except Exception as e:
         print(f"Error opening camera: {e}")

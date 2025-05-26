@@ -11,6 +11,15 @@ import facenet
 import imutils
 import os
 import sys
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(project_root)
+print("Current working directory:", os.getcwd())
+print("face_rec_cam.py location:", os.path.abspath(__file__))
+cdc_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../CDCNpp'))
+print("CDC path to add:", cdc_path)
+sys.path.append(cdc_path)
+print("sys.path:", sys.path)
+from CDCNpp.main import load_model as load_cdc_model, predict as cdc_predict
 import math
 import pickle
 import align.detect_face
@@ -31,6 +40,8 @@ app.secret_key = os.getenv('SECRET_KEY')
 socketio_client = socketio.Client()
 
 attendance_success = False
+
+
 
 # attendance_log = {}
 
@@ -60,6 +71,12 @@ def on_stop_camera(data):
 def main():
 
     attendance_success = False
+
+    # Khởi tạo model CDCNpp
+    cdc_model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../CDCNpp/CDCNpp_BinaryMask_P1_07_60.pkl'))
+    cdc_model = load_cdc_model(cdc_model_path)
+    print("CDCNpp model loaded successfully.")
+
     # Kết nối đến server
     try:
         socketio_client.connect('http://127.0.0.1:5000')
@@ -82,10 +99,12 @@ def main():
     FACTOR = 0.709 # được sử dụng để giảm kích thước hình ảnh trong quá trình quét ( < MINSIZE = 20 thì ngừng quét)
     # IMAGE_SIZE = 182
     INPUT_IMAGE_SIZE = 160 # kích thước mà các khuôn mặt sẽ được thay đổi kích thước trước khi được đưa vào mô hình để trích xuất đặc trưng.
-    CLASSIFIER_PATH = '../Models/facemodel.pkl'
+    # CLASSIFIER_PATH = '../Models/facemodel.pkl'
+    CLASSIFIER_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../Models/facemodel.pkl'))
     # CLASSIFIER_PATH = 'Models/facemodel.pkl'
     VIDEO_PATH = args.path
-    FACENET_MODEL_PATH = '../Models/20180402-114759.pb' # Tệp Protobuf là tệp tuần tự hóa dữ liệu, tối ưu cho việc lưu trữ và trao đổi dữ liệu nhanh chóng.
+    # FACENET_MODEL_PATH = '../Models/20180402-114759.pb' # Tệp Protobuf là tệp tuần tự hóa dữ liệu, tối ưu cho việc lưu trữ và trao đổi dữ liệu nhanh chóng.
+    FACENET_MODEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../Models/20180402-114759.pb'))
     # FACENET_MODEL_PATH = 'Models/20180402-114759.pb'
 
     # Tải mô hình phân loại khuôn mặt từ file pickle
@@ -110,7 +129,8 @@ def main():
             embedding_size = embeddings.get_shape()[1] # Đây là kích thước của vector đặc trưng (embeddings) mà mô hình tạo ra. Nó được lấy từ hình dạng của tensor embeddings, cho phép bạn biết số chiều của vector đặc trưng mà bạn sẽ làm việc với.
 
             #  Tạo các mạng MTCNN để phát hiện khuôn mặt.
-            pnet, rnet, onet = align.detect_face.create_mtcnn(sess, "../src/align")
+            align_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'align'))
+            pnet, rnet, onet = align.detect_face.create_mtcnn(sess, align_dir)
 
             # Khởi tạo các biến để theo dõi người đã phát hiện và bắt đầu video stream từ camera.
             people_detected = set()
@@ -150,8 +170,18 @@ def main():
                             # Cắt và tiền xử lý khuôn mặt nếu chiều cao của khuôn mặt lớn hơn 25% chiều cao khung hình.
                             if (bb[i][3]-bb[i][1])/frame.shape[0]>0.25:
                                 cropped = frame[bb[i][1]:bb[i][3], bb[i][0]:bb[i][2], :]
+
+                                # --- Kiểm tra thật/giả bằng CDCNpp ---
+                                real_or_fake = cdc_predict(cdc_model, cropped)
+                                if real_or_fake != "Real":
+                                    name = "Fake Face"
+                                    cv2.putText(frame, name, (bb[i][0], bb[i][3] + 20), cv2.FONT_HERSHEY_COMPLEX_SMALL,
+                                                1, (0, 0, 255), thickness=1, lineType=2)
+                                    continue  # Bỏ qua nhận diện nếu là mặt giả
+                                
+                                # Nếu là mặt thật, tiếp tục nhận diện như cũ
                                 scaled = cv2.resize(cropped, (INPUT_IMAGE_SIZE, INPUT_IMAGE_SIZE),
-                                                    interpolation=cv2.INTER_CUBIC)
+                                                 interpolation=cv2.INTER_CUBIC)
                                 scaled = facenet.prewhiten(scaled)
                                 scaled_reshape = scaled.reshape(-1, INPUT_IMAGE_SIZE, INPUT_IMAGE_SIZE, 3)
 

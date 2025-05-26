@@ -1,0 +1,69 @@
+import cv2
+import torch
+from torchvision import transforms
+from models.CDCNs import CDCNpp  # Sửa lại dòng import này
+
+# Thêm bộ phát hiện khuôn mặt
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+
+def load_model(model_path):
+    model = CDCNpp()  # Khởi tạo model đúng kiến trúc
+    state_dict = torch.load(model_path, map_location=torch.device('cpu'))
+    model.load_state_dict(state_dict)
+    model.eval()
+    return model
+
+def preprocess(face_img):
+    # Chuyển BGR (OpenCV) sang RGB (PyTorch)
+    face_img = cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB)
+    transform = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Resize((256, 256)),
+        transforms.ToTensor(),
+    ])
+    return transform(face_img).unsqueeze(0)
+
+def predict(model, frame):
+    # Phát hiện khuôn mặt
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(60, 60))
+    if len(faces) == 0:
+        return "No Face"
+    # Lấy khuôn mặt lớn nhất
+    x, y, w, h = max(faces, key=lambda rect: rect[2]*rect[3])
+    face_img = frame[y:y+h, x:x+w]
+    input_tensor = preprocess(face_img)
+    with torch.no_grad():
+        output = model(input_tensor)
+        if isinstance(output, (tuple, list)):
+            output = output[0]
+        pred = torch.sigmoid(output).mean().item()
+        return "Real" if pred > 0.6 else "Fake"
+
+def main():
+    model_path = r"C:\Users\ASUS\Desktop\testmodel\CDCNpp_BinaryMask_P1_07_60.pkl"
+    model = load_model(model_path)
+
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        print("Không mở được camera!")
+        return
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        label = predict(model, frame)
+        cv2.putText(frame, label, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1,
+                    (0, 255, 0) if label == "Real" else ((0, 0, 255) if label == "Fake" else (0, 255, 255)), 2)
+        cv2.imshow('Face Anti-Spoofing', frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
