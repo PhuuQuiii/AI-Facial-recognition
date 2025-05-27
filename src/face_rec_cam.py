@@ -19,7 +19,7 @@ cdc_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../CDCNpp'))
 print("CDC path to add:", cdc_path)
 sys.path.append(cdc_path)
 print("sys.path:", sys.path)
-from CDCNpp.main import load_model as load_cdc_model, predict as cdc_predict
+from CDCNpp.main import load_model as load_cdc_model, predict_on_worker as cdc_predict
 import math
 import pickle
 import align.detect_face
@@ -73,8 +73,9 @@ def main():
     attendance_success = False
 
     # Khởi tạo model CDCNpp
-    cdc_model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../CDCNpp/CDCNpp_BinaryMask_P1_07_60.pkl'))
-    cdc_model = load_cdc_model(cdc_model_path)
+    # cdc_model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../CDCNpp/CDCNpp_BinaryMask_P1_07_60.pkl'))
+    cdc_model_path = r'D:\E\DoANChuyenNganh\Facial_recognition\CDCNpp\CDCNpp_BinaryMask_P1_07_30.pkl'
+    cdc_model, cdc_device = load_cdc_model(cdc_model_path)
     print("CDCNpp model loaded successfully.")
 
     # Kết nối đến server
@@ -87,12 +88,12 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', help='Path of the video you want to test on.', default=0)
-    parser.add_argument("date", type=str, help="Date in YYYY-MM-DD format")
-    parser.add_argument("classId", type=str, help="Class ID")
+    # parser.add_argument("date", type=str, help="Date in YYYY-MM-DD format")
+    # parser.add_argument("classId", type=str, help="Class ID")
     args = parser.parse_args()
     
-    date = args.date
-    classId = args.classId
+    # date = args.date
+    # classId = args.classId
 
     MINSIZE = 20 # nếu khuôn mặt nhỏ hơn kích thước 20 pixel ( bỏ qua )
     THRESHOLD = [0.6, 0.7, 0.7] # quét qua hình ảnh và đưa ra các dự đoán về các vùng có thể chứa khuôn mặt.
@@ -100,12 +101,12 @@ def main():
     # IMAGE_SIZE = 182
     INPUT_IMAGE_SIZE = 160 # kích thước mà các khuôn mặt sẽ được thay đổi kích thước trước khi được đưa vào mô hình để trích xuất đặc trưng.
     # CLASSIFIER_PATH = '../Models/facemodel.pkl'
-    CLASSIFIER_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../Models/facemodel.pkl'))
-    # CLASSIFIER_PATH = 'Models/facemodel.pkl'
+    # CLASSIFIER_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../Models/facemodel.pkl'))
+    CLASSIFIER_PATH = 'Models/facemodel.pkl'
     VIDEO_PATH = args.path
     # FACENET_MODEL_PATH = '../Models/20180402-114759.pb' # Tệp Protobuf là tệp tuần tự hóa dữ liệu, tối ưu cho việc lưu trữ và trao đổi dữ liệu nhanh chóng.
-    FACENET_MODEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../Models/20180402-114759.pb'))
-    # FACENET_MODEL_PATH = 'Models/20180402-114759.pb'
+    # FACENET_MODEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../Models/20180402-114759.pb'))
+    FACENET_MODEL_PATH = 'Models/20180402-114759.pb'
 
     # Tải mô hình phân loại khuôn mặt từ file pickle
     with open(CLASSIFIER_PATH, 'rb') as file:
@@ -149,6 +150,7 @@ def main():
 
                 # Kiểm tra số lượng khuôn mặt phát hiện được và hiển thị thông báo nếu có nhiều hơn một khuôn mặt.
                 faces_found = bounding_boxes.shape[0]
+                print("Số khuôn mặt phát hiện:", faces_found)
                 try:
                     if faces_found > 1:
                         cv2.putText(frame, "Only one face", (0, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL,
@@ -168,15 +170,28 @@ def main():
                             # print((bb[i][3]-bb[i][1])/frame.shape[0])
 
                             # Cắt và tiền xử lý khuôn mặt nếu chiều cao của khuôn mặt lớn hơn 25% chiều cao khung hình.
-                            if (bb[i][3]-bb[i][1])/frame.shape[0]>0.25:
+                            if (bb[i][3]-bb[i][1])/frame.shape[0]>0.1:
                                 cropped = frame[bb[i][1]:bb[i][3], bb[i][0]:bb[i][2], :]
 
                                 # --- Kiểm tra thật/giả bằng CDCNpp ---
-                                real_or_fake = cdc_predict(cdc_model, cropped)
+                                result = cdc_predict(cdc_model, cropped, cdc_device)
+                                if isinstance(result, tuple) and len(result) == 2:
+                                    real_or_fake, prob = result
+                                else:
+                                    print(f"CDC Predict Error: {result}")
+                                    real_or_fake, prob = "Error", 0.0
                                 if real_or_fake != "Real":
-                                    name = "Fake Face"
-                                    cv2.putText(frame, name, (bb[i][0], bb[i][3] + 20), cv2.FONT_HERSHEY_COMPLEX_SMALL,
-                                                1, (0, 0, 255), thickness=1, lineType=2)
+                                    name = f"Fake ({prob:.2f})"
+                                    color = (0, 0, 255)
+                                else:
+                                    name = f"Real ({prob:.2f})"
+                                    color = (0, 255, 0)
+
+                                # Vẽ khung và chữ trên viền khuôn mặt
+                                cv2.rectangle(frame, (bb[i][0], bb[i][1]), (bb[i][2], bb[i][3]), color, 2)
+                                cv2.putText(frame, name, (bb[i][0], bb[i][1] - 10), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, color, 2, lineType=2)
+
+                                if real_or_fake != "Real":
                                     continue  # Bỏ qua nhận diện nếu là mặt giả
                                 
                                 # Nếu là mặt thật, tiếp tục nhận diện như cũ
@@ -209,7 +224,7 @@ def main():
                                     cv2.putText(frame, str(round(best_class_probabilities[0], 3)), (text_x, text_y + 17),
                                                 cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), thickness=1, lineType=2)
                                     
-                                    socketio_client.emit('response', {"success": True,"MSSV": best_name, "date": date, "classId": classId},)
+                                    # socketio_client.emit('response', {"success": True,"MSSV": best_name, "date": date, "classId": classId},)
                                     attendance_success = True
 
                                     # # Gửi thông báo qua SocketIO nếu chưa điểm danh hôm nay
