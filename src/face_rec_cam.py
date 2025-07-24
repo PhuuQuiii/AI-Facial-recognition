@@ -224,7 +224,7 @@ def main():
                                     cv2.putText(frame, str(round(best_class_probabilities[0], 3)), (text_x, text_y + 17),
                                                 cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), thickness=1, lineType=2)
                                     
-                                    # socketio_client.emit('response', {"success": True,"MSSV": best_name, "date": date, "classId": classId},)
+                                    socketio_client.emit('response', {"success": True,"MSSV": best_name, "date": date, "classId": classId},)
                                     attendance_success = True
 
                                     # # Gửi thông báo qua SocketIO nếu chưa điểm danh hôm nay

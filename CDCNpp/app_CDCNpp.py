@@ -41,9 +41,11 @@ except ImportError:
 
 app = Flask(__name__)
 
-MODEL_PATH = "CDCNpp_BinaryMask_P1_07/CDCNpp_BinaryMask_P1_07_30.pkl"
+# MODEL_PATH = "CDCNpp_BinaryMask_P1_07/CDCNpp_BinaryMask_P1_07_30.pkl"
+MODEL_PATH = r'D:\E\DoANChuyenNganh\Facial_recognition\CDCNpp\CDCNpp_BinaryMask_P1_07_30.pkl'
 TRAINING_THETA_VALUE = 0.7
-DECISION_THRESHOLD = 0.9
+# DECISION_THRESHOLD = 0.9
+DECISION_THRESHOLD = 0.8
 
 actual_model = None
 device = None
@@ -228,6 +230,8 @@ def predict():
         return jsonify({"error": "Không có dữ liệu ảnh"}), 400
 
     try:
+        mssv = request.form.get('MSSV', None)
+
         if 'file' in request.files and request.files['file'].filename != '':
             file = request.files['file']
             filestr = file.read()
@@ -235,7 +239,6 @@ def predict():
             image_np = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
             if image_np is None:
                  return jsonify({"error": "Không thể decode file ảnh tải lên."}), 400
-            # print("INFO: Đã nhận ảnh từ file tải lên.")
         elif 'image_data' in request.form:
             image_data_base64 = request.form['image_data'].split(',')[1]
             image_bytes = base64.b64decode(image_data_base64)
@@ -243,11 +246,13 @@ def predict():
             image_np = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
             if image_np is None:
                  return jsonify({"error": "Không thể decode ảnh base64 từ webcam."}), 400
-            # print("INFO: Đã nhận ảnh từ webcam.")
         else:
             return jsonify({"error": "Dữ liệu không hợp lệ"}), 400
 
         result, status_code = get_prediction(image_np)
+        # Đảm bảo luôn có MSSV trong kết quả trả về (kể cả lỗi)
+        if mssv is not None:
+            result['MSSV'] = mssv
         return jsonify(result), status_code
     except Exception as e:
         print(f"Lỗi không xác định trong route /predict: {e}")
