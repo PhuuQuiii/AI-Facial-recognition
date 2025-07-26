@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Nhận diện Khuôn mặt</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Hệ thống Nhận diện Sinh viên</h1>
+        <p style="text-align: center; color: navy; font-style: italic;">
+            Vui lòng tải ảnh lên hoặc sử dụng webcam để thực hiện nhận diện.
+        </p>
+
+        <div class="controls">
+            <div class="upload-section">
+                <h2>Tải ảnh lên</h2>
+                <input type="file" id="imageUpload" accept="image/*">
+                <button id="uploadButton">Tải lên & Nhận diện</button>
+            </div>
+
+            <div class="webcam-section">
+                <h2>Sử dụng Webcam</h2>
+                <div class="webcam-feed-container">
+                    <video id="webcamFeed" autoplay playsinline></video>
+                    <canvas id="webcamCanvas" style="display:none;"></canvas> </div>
+                <div class="webcam-buttons">
+                    <button id="startWebcamButton">Mở Webcam</button>
+                    <button id="captureButton" disabled>Chụp & Nhận diện</button>
+                    <button id="stopWebcamButton" disabled>Tắt Webcam</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="imagePreviewContainer" class="preview-container" style="display:none;">
+            <h2>Xem trước ảnh đã chọn/chụp:</h2>
+            <img id="imagePreview" src="#" alt="Xem trước ảnh" style="display:none;">
+            <canvas id="imagePreviewCanvas" class="preview-canvas"></canvas> </div>
+
+        <div id="results" class="results-section" style="display:none;"> <h2>Kết quả Nhận diện:</h2>
+            <div id="loader" style="display:none;">Đang xử lý...</div>
+            <p id="recognitionStatus">Trạng thái: N/A</p>
+            <p id="recognizedId">MSSV: N/A</p>
+            <p id="recognitionProbability">Xác suất: N/A</p>
+            <p id="facesDetectedCount">Số khuôn mặt phát hiện: N/A</p>
+            <p id="processingTime">Thời gian xử lý (API): N/A</p>
+        </div>
+
+        <div class="footer">
+            <p>Giao diện web bởi Gemini. API Backend bởi bạn.</p>
+            <p>Lưu ý: Đây là ứng dụng demo. Kết quả chỉ mang tính tham khảo.</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -17,6 +17,8 @@ import pickle
 from imutils.video import VideoStream
 import imutils
 import socket
+import requests  # Đã có
+from socketio import Client  # Thêm dòng này
 
 
 def get_local_ip():
@@ -337,14 +339,97 @@ def open_camera():
         data = request.get_json()
         date = data.get('date')
         classId = data.get('classId')
-        # Chạy lệnh mở camera
-        # process = subprocess.Popen(['python', 'face_rec_cam.py', date, classId], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        process = subprocess.Popen(['python', 'src/face_rec_cam.py', date, classId], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-        #process = subprocess.Popen(['python', 'face_rec_cam.py'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
-        if process.returncode != 0:
-            raise Exception(stderr.decode('utf-8', errors='ignore'))
-        return jsonify({"success": True})
+        image_data = data.get('image')
+
+        # Nếu có ảnh từ web gửi lên thì giải mã và lưu tạm
+        temp_img_path = None
+        if image_data:
+            # Giải mã base64
+            if image_data.startswith('data:image'):
+                image_data = image_data.split(',')[1]
+            img_bytes = base64.b64decode(image_data)
+            temp_img_path = os.path.join(os.path.dirname(__file__), 'temp_web_capture.jpg')
+            with open(temp_img_path, 'wb') as f:
+                f.write(img_bytes)
+
+        # Gửi ảnh tới API liveness (http://127.0.0.1:3000/predict)
+        liveness_result = None
+        if temp_img_path and os.path.exists(temp_img_path):
+            with open(temp_img_path, 'rb') as img_file:
+                files = {'file': ('temp_web_capture.jpg', img_file, 'image/jpeg')}
+                try:
+                    liveness_response = requests.post('http://127.0.0.1:3000/predict', files=files, timeout=10)
+                    if liveness_response.ok:
+                        liveness_result = liveness_response.json()
+                        print("Liveness result:", liveness_result)
+                    else:
+                        print("Liveness API error:", liveness_response.status_code)
+                except Exception as ex:
+                    print("Exception when calling liveness API:", ex)
+        
+        # Kiểm tra nếu liveness thành công trước khi gọi recognition
+        if liveness_result and liveness_result.get('label') == 'Thật (Real)':
+            print("Liveness PASSED. Calling recognition API...")
+            
+            # Gọi API recognition với cùng file ảnh
+            recognition_result = None
+            if temp_img_path and os.path.exists(temp_img_path):
+                with open(temp_img_path, 'rb') as img_file:
+                    files = {'image': ('temp_web_capture.jpg', img_file, 'image/jpeg')}
+                    form_data = {
+                        'date': date,
+                        'classId': classId
+                    }
+                    try:
+                        recognition_response = requests.post('http://127.0.0.1:5001/recognize', 
+                                                           files=files, 
+                                                           data=form_data, 
+                                                           timeout=15)
+                        if recognition_response.ok:
+                            recognition_result = recognition_response.json()
+                            print("Recognition result:", recognition_result)
+                        else:
+                            print("Recognition API error:", recognition_response.status_code)
+                            print("Recognition API response:", recognition_response.text)
+                    except Exception as ex:
+                        print("Exception when calling recognition API:", ex)
+
+        # Sau khi nhận diện xong, gọi tiếp API lấy MSSV
+        mssv_result = None
+        mssv_value = None
+        try:
+            # Đợi một chút để đảm bảo recognition API đã xử lý xong
+            import time
+            time.sleep(0.5)
+
+            mssv_response = requests.get('http://127.0.0.1:5001/get_last_mssv', timeout=5)
+            if mssv_response.ok:
+                mssv_result = mssv_response.json()
+                print("MSSV từ API /get_last_mssv:", mssv_result)
+                if mssv_result.get("success") and mssv_result.get("MSSV"):
+                    mssv_value = mssv_result["MSSV"]
+            else:
+                print("Lỗi lấy MSSV từ API /get_last_mssv:", mssv_response.status_code)
+        except Exception as ex:
+            print("Exception khi gọi API lấy MSSV:", ex)
+
+        # Gửi socket nếu có MSSV
+        if mssv_value:
+            try:
+                sio = Client()
+                sio.connect('http://localhost:5000')  # Kết nối tới server socketio (cùng port Flask hoặc port riêng)
+                sio.emit('response', {
+                    "success": True,
+                    "MSSV": mssv_value,
+                    "date": date,
+                    "classId": classId
+                })
+                print(f"Đã emit socket với MSSV: {mssv_value}, date: {date}, classId: {classId}")
+                sio.disconnect()
+            except Exception as ex:
+                print("Lỗi khi emit socketio:", ex)
+
+        return jsonify({"success": True, "liveness_result": liveness_result, "mssv_result": mssv_result})
     except Exception as e:
         print(f"Error opening camera: {e}")
         return jsonify({"success": False, "message": str(e)})

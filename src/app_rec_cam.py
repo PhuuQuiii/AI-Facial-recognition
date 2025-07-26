@@ -33,10 +33,10 @@ FACTOR = 0.709
 INPUT_IMAGE_SIZE = 160
 
 # Ensure these paths are correct relative to where you run the Flask app
-CLASSIFIER_PATH = '/Users/bduong/Documents/AI-Facial-recognition/Models/facemodel.pkl'
-FACENET_MODEL_PATH = '/Users/bduong/Documents/AI-Facial-recognition/Models/20180402-114759.pb'
+CLASSIFIER_PATH = r'D:\E\DoANChuyenNganh\Facial_recognition\Models\facemodel.pkl'
+FACENET_MODEL_PATH = r'D:\E\DoANChuyenNganh\Facial_recognition\Models\20180402-114759.pb'
 # ### DEBUG ###: Verify this directory and its contents
-MTCNN_MODEL_DIR = '/Users/bduong/Documents/AI-Facial-recognition/src/align'
+MTCNN_MODEL_DIR = r'D:\E\DoANChuyenNganh\Facial_recognition\src\align'
 print(f"### DEBUG ###: Checking MTCNN_MODEL_DIR: {MTCNN_MODEL_DIR}")
 if not os.path.isdir(MTCNN_MODEL_DIR):
     print(f"### DEBUG ###: ERROR - MTCNN_MODEL_DIR does not exist or is not a directory!")
@@ -75,9 +75,13 @@ with open(CLASSIFIER_PATH, 'rb') as infile:
 print("Classifier model loaded.")
 print(f"Class names: {class_names}")
 
+# Biến toàn cục lưu MSSV nhận diện gần nhất
+last_mssv = None
+
 # --- Flask API Endpoint ---
 @app.route('/recognize', methods=['POST'])
 def recognize_face():
+    global last_mssv
     start_time = datetime.datetime.now() # For overall processing time measurement
 
     if 'image' not in request.files:
@@ -133,6 +137,7 @@ def recognize_face():
 
         results = []
         recognition_success = False # Overall success if at least one face is confidently recognized
+        mssv_to_send = None
 
         if faces_found > 0:
             det = bounding_boxes[:, 0:4] # x1, y1, x2, y2
@@ -207,6 +212,8 @@ def recognize_face():
 
                     if best_class_probabilities[0] > 0.70: # Confidence threshold for "known"
                         recognition_success = True # Mark overall success
+                        if mssv_to_send is None:
+                            mssv_to_send = best_name
                         # results.append(current_recognition) # Appended below
                     else:
                         current_recognition["MSSV"] = "Unknown" # If below threshold, classify as Unknown
@@ -232,7 +239,8 @@ def recognize_face():
             "classId": class_id_param,
             "recognitions": results,
             "faces_detected_count": faces_found,
-            "processing_time_ms": round(processing_time_ms, 2)
+            "processing_time_ms": round(processing_time_ms, 2),
+            "MSSV": mssv_to_send,
         }
 
         if faces_found == 0:
@@ -244,6 +252,10 @@ def recognize_face():
         elif recognition_success:
             response_payload["message"] = "Recognition process completed."
         
+        # Lưu MSSV nhận diện gần nhất (nếu có)
+        if mssv_to_send:
+            last_mssv = mssv_to_send
+
         return jsonify(response_payload), 200
 
     except Exception as e:
@@ -252,8 +264,39 @@ def recognize_face():
         traceback.print_exc() # Print full traceback to Flask console
         return jsonify({"error": "An internal server error occurred", "details": str(e)}), 500
 
+@app.route('/get_last_mssv', methods=['GET'])
+def get_last_mssv():
+    global last_mssv
+    if last_mssv:
+        return jsonify({"MSSV": last_mssv, "success": True})
+    else:
+        return jsonify({"MSSV": None, "success": False, "message": "No MSSV recognized yet."})
+
+
 if __name__ == '__main__':
     print("### DEBUG ###: Starting Flask app for recognition service...")
     # For production, consider using Gunicorn or another WSGI server.
     # threaded=False is often recommended for TensorFlow in Flask's dev server.
+    with tf_graph.as_default():
+        with tf_sess.as_default():
+            if pnet and rnet and onet and images_placeholder is not None: # Check if models loaded
+                print("### DEBUG ###: Performing TensorFlow warm-up...")
+                try:
+                    # Create a dummy image tensor of the expected input size
+                    dummy_image_np = np.zeros((INPUT_IMAGE_SIZE, INPUT_IMAGE_SIZE, 3), dtype=np.float32)
+                    dummy_image_np = facenet.prewhiten(dummy_image_np)
+                    dummy_image_reshaped = dummy_image_np.reshape(-1, INPUT_IMAGE_SIZE, INPUT_IMAGE_SIZE, 3)
+
+                    # Warm-up Facenet
+                    _ = tf_sess.run(embeddings, feed_dict={
+                        images_placeholder: dummy_image_reshaped,
+                        phase_train_placeholder: False
+                    })
+
+                    # Warm-up MTCNN (requires a frame-like input)
+                    dummy_frame = np.zeros((480, 640, 3), dtype=np.uint8) # Example frame size
+                    _ = align.detect_face.detect_face(dummy_frame, MINSIZE, pnet, rnet, onet, THRESHOLD, FACTOR)
+                    print("### DEBUG ###: TensorFlow warm-up completed.")
+                except Exception as e_warmup:
+                    print(f"### DEBUG ###: Error during TensorFlow warm-up: {e_warmup}")
     app.run(host='0.0.0.0', port=5001, debug=False, threaded=False)

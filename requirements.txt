@@ -13,7 +13,7 @@ mysql-connector-python
 flask-socketio
 python-dotenv
 imutils
-
+websocket-client
 
 
 

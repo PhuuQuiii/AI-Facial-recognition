@@ -164,37 +164,71 @@
       // Gọi API cam python
       async function openCamera(classId, date, element) {
         try {
-          socket.on("response", function (data) {
-            if (data.message) {
-              console.log("Attendance marked successfully.");
-              element.innerHTML = "";
-              element.classList.add("icon-tick");
-              mssv = data.MSSV;
-              status = "Present";
-              classId = data.classId;
-              date = data.date;
-              updateAttendance(mssv, status, classId, date, "");
-              socket.emit("stop_camera", { success: true });
+          // Mở webcam, chụp ảnh
+          const video = document.createElement("video");
+          video.autoplay = true;
+          video.playsInline = true;
+          video.style.position = "fixed";
+          video.style.top = "50%";
+          video.style.left = "50%";
+          video.style.transform = "translate(-50%, -50%)";
+          video.style.zIndex = 10000;
+          video.style.background = "#000";
+          video.width = 400;
+          video.height = 300;
+          document.body.appendChild(video);
+
+          // Yêu cầu quyền truy cập webcam
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+          video.srcObject = stream;
+
+          // Tạo nút chụp ảnh
+          const captureBtn = document.createElement("button");
+          captureBtn.innerText = "Chụp ảnh";
+          captureBtn.style.position = "fixed";
+          captureBtn.style.top = "calc(50% + 180px)";
+          captureBtn.style.left = "50%";
+          captureBtn.style.transform = "translateX(-50%)";
+          captureBtn.style.zIndex = 10001;
+          document.body.appendChild(captureBtn);
+
+          captureBtn.onclick = async function () {
+            // Chụp ảnh từ video
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth || 400;
+            canvas.height = video.videoHeight || 300;
+            canvas
+              .getContext("2d")
+              .drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL("image/jpeg");
+
+            // Dừng webcam
+            stream.getTracks().forEach((track) => track.stop());
+            video.remove();
+            captureBtn.remove();
+
+            // Gửi ảnh qua API open_camera
+            const response = await fetch("/open_camera", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                classId,
+                date,
+                image: imageData,
+              }),
+            });
+            const data = await response.json();
+            if (data.success) {
+              showNotification("Đã gửi ảnh lên server để nhận diện.");
             } else {
-              console.error("Attendance marking failed:", response.message);
+              showNotification("Lỗi gửi ảnh: " + (data.message || ""));
             }
-          });
-          // Gọi API để mở camera
-          const response = await fetch("/open_camera", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              classId,
-              date,
-            }),
-          });
-          const data = await response.json();
-          console.log("Camera opened successfully.");
-          // Lắng nghe sự kiện từ socket
+          };
         } catch (error) {
           console.error("Lỗi khi mở camera:", error);
+          showNotification("Không thể mở webcam: " + error.message);
         }
       }
 
