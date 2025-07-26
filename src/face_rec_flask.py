@@ -16,7 +16,23 @@ import cv2
 import pickle
 from imutils.video import VideoStream
 import imutils
+import socket
 
+
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = '127.0.0.1'
+    finally:
+        s.close()
+    return ip
+
+ALLOWED_IP = '192.168.1.9'  # IP WiFi được phép truy cập
+
+print("Chỉ cho phép truy cập từ IP:", ALLOWED_IP)
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY') # Thay đổi secret key cho bảo mật
@@ -259,10 +275,15 @@ def update_attendance():
 
     return jsonify({"success": True, "message": status})
 
+
+#Phần xư lý ip wifi học viện
+
 @app.before_request
 def before_request_func():
-    print("Received request:", request.url)
-    print("Request headers:", request.headers)
+    server_ip = get_local_ip()
+    print(f"ALLOWED_IP: {ALLOWED_IP} | SERVER_IP: {server_ip}")
+    if server_ip != ALLOWED_IP:
+        return "Truy cập bị từ chối: chỉ cho phép từ WiFi Học Viện", 403
 
 
 @app.route('/save_images', methods=['POST'])
@@ -272,9 +293,9 @@ def save_images():
     images = data['images']
 
     # Đường dẫn đến thư mục raw trong thư mục FaceData
-    directory = f'E:/DoAN/Facial_recognition/Dataset/FaceData/raw/{student_id}'
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    directory = os.path.join(os.getcwd(), "Dataset", "FaceData", "raw", student_id)
+    os.makedirs(directory, exist_ok=True)
+  
 
     # Lưu từng ảnh vào thư mục
     for i, image in enumerate(images):

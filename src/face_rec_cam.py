@@ -36,7 +36,8 @@ import socketio
 
 # Khởi tạo Flask app
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY')
+# app.secret_key = os.getenv('SECRET_KEY')
+app.secret_key = 'vaa_nckh_2025_secret'
 socketio_client = socketio.Client()
 
 attendance_success = False
@@ -74,7 +75,7 @@ def main():
 
     # Khởi tạo model CDCNpp
     # cdc_model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../CDCNpp/CDCNpp_BinaryMask_P1_07_60.pkl'))
-    cdc_model_path = r'D:\E\DoANChuyenNganh\Facial_recognition\CDCNpp\CDCNpp_BinaryMask_P1_07_30.pkl'
+    cdc_model_path = r'D:\NHATTRUONG\VAA\NCKH\AI-Facial-recognition\CDCNpp\CDCNpp_BinaryMask_P1_07_30.pkl'
     cdc_model, cdc_device = load_cdc_model(cdc_model_path)
     print("CDCNpp model loaded successfully.")
 

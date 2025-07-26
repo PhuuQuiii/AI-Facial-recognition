@@ -18,7 +18,6 @@
         text-align: center;
         color: #2d3436;
       }
-
       h1 {
         color: #636e72;
         font-size: 2rem;
@@ -26,7 +25,12 @@
         letter-spacing: 1.2px;
         text-transform: uppercase;
       }
-
+      #status {
+        margin-top: 10px;
+        font-size: 1rem;
+        color: #0984e3;
+        font-weight: 500;
+      }
       video {
         width: 90%;
         max-width: 600px;
@@ -36,9 +40,7 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         margin-bottom: 20px;
       }
-
-      input[type="text"],
-      input[type="file"] {
+      input[type="text"], input[type="file"] {
         width: 80%;
         max-width: 400px;
         padding: 12px;
@@ -52,13 +54,10 @@
         transition: all 0.3s ease-in-out;
         background: #ffffff;
       }
-
-      input[type="text"]:focus,
-      input[type="file"]:focus {
+      input[type="text"]:focus, input[type="file"]:focus {
         border-color: #0984e3;
         box-shadow: 0 4px 8px rgba(9, 132, 227, 0.2);
       }
-
       button {
         background-color: #0984e3;
         color: white;
@@ -72,18 +71,15 @@
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease-in-out;
       }
-
       button:hover {
         background-color: #74b9ff;
         box-shadow: 0 6px 12px rgba(116, 185, 255, 0.2);
         transform: translateY(-2px);
       }
-
       button:active {
         transform: translateY(0);
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
-
       #imageUpload {
         padding: 6px;
       }
@@ -94,175 +90,162 @@
     <video id="video" autoplay></video>
     <input type="text" id="studentId" placeholder="Nhập mã số sinh viên" />
     <input type="file" id="imageUpload" multiple accept="image/*" />
-    <button id="openCameraButton">Mở camera</button>
+    <button id="openCameraAndTrainAndTrainButton">Thu thập thông tin điểm danh</button>
     <button id="uploadImageButton">Lấy ảnh từ máy lên</button>
-    <button id="preprocessButton">Tiền xử lý dữ liệu</button>
-    <button id="trainButton">Huấn luyện mô hình</button>
+    <div id="status"></div>
 
     <script>
       const video = document.getElementById("video");
-      const openCameraButton = document.getElementById("openCameraButton");
       const studentIdInput = document.getElementById("studentId");
+      const statusDiv = document.getElementById("status");
       let stream;
+      let cameraReady = false;
 
-      openCameraButton.addEventListener("click", async () => {
-        const studentId = studentIdInput.value;
-        if (!studentId) {
-          alert("Vui lòng nhập mã số sinh viên trước khi mở camera.");
-          return;
-        }
+      function setStatus(msg) {
+        statusDiv.textContent = msg;
+      }
 
+      window.addEventListener("DOMContentLoaded", async () => {
         try {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-          });
+          stream = await navigator.mediaDevices.getUserMedia({ video: true });
           video.srcObject = stream;
-
-          // Chụp 64 ảnh trong 8 giây
-          setTimeout(() => {
-            captureImages(64);
-          }, 8000);
+          video.onloadedmetadata = () => {
+            cameraReady = true;
+            setStatus("Camera sẵn sàng.");
+          };
         } catch (error) {
-          console.error("Error accessing the camera: ", error);
-          alert("Không thể mở camera. Vui lòng kiểm tra quyền truy cập.");
+          console.error("Lỗi mở camera ban đầu: ", error);
+          alert("Không thể mở camera khi tải trang. Kiểm tra quyền truy cập.");
         }
       });
 
-      function captureImages(count) {
+      document.getElementById("openCameraAndTrainAndTrainButton").addEventListener("click", async () => {
+        const studentId = studentIdInput.value;
+        if (!studentId) {
+          alert("Vui lòng nhập mã số sinh viên trước khi bắt đầu.");
+          return;
+        }
+
+        if (!cameraReady) {
+          alert("Camera chưa sẵn sàng, vui lòng chờ trong giây lát.");
+          return;
+        }
+
+        setStatus("Đang chụp ảnh...");
+        captureImages(64, async (images) => {
+          setStatus("Đang lưu ảnh...");
+          await saveImages(images);
+          setStatus("Đang tiền xử lý dữ liệu...");
+          await preprocess();
+          setStatus("Đang huấn luyện mô hình...");
+          await trainModel();
+          setStatus("Hoàn tất quy trình điểm danh.");
+        });
+      });
+
+       function captureImages(count, callback) {
         const images = [];
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
 
-        for (let i = 0; i < count; i++) {
-          setTimeout(() => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = canvas.toDataURL("image/jpeg");
-            images.push(imageData);
-            console.log(`Captured image ${i + 1}`);
-          }, i * 125); // Chụp mỗi 125ms
-        }
+        let captured = 0;
+        const interval = setInterval(() => {
+          if (captured >= count) {
+            clearInterval(interval);
+            callback(images);
+            return;
+          }
+          if (video.videoWidth === 0 || video.videoHeight === 0) return;
 
-        setTimeout(() => {
-          console.log("Saving images: ", images);
-          saveImages(images);
-          // Dừng camera sau khi chụp xong
-          stopCamera();
-        }, count * 125);
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          images.push(canvas.toDataURL("image/jpeg"));
+          captured++;
+
+          const percent = Math.round((captured / count) * 100);
+          setStatus(`Đang chụp ảnh... (${percent}%)`);
+        }, 125);
       }
 
-      function stopCamera() {
-        if (stream) {
-          stream.getTracks().forEach((track) => track.stop());
-          video.srcObject = null;
-        }
-      }
-
-      function saveImages(images) {
+async function saveImages(images) {
         const studentId = studentIdInput.value;
+        let failedChunks = 0;
+        const chunkSize = 55;
+
+        for (let i = 0; i < images.length; i += chunkSize) {
+          const chunk = images.slice(i, i + chunkSize);
+          // setStatus(`Đang gửi ảnh ${i + 1} đến ${i + chunk.length}...`);
+
+          try {
+            const res = await fetch("/save_images", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ studentId, images: chunk })
+            });
+
+            if (!res.ok) throw new Error("Phản hồi không hợp lệ từ máy chủ");
+
+            const data = await res.json();
+            if (!data.success) throw new Error("Máy chủ trả về lỗi khi lưu ảnh");
+
+          } catch (error) {
+            console.warn(`❌ Lỗi gửi ảnh ${i + 1}–${i + chunk.length}:`, error);
+            failedChunks++;
+          }
+        }
+
+        if (failedChunks === 0) {
+          setStatus("✅ Lưu ảnh thành công.");
+        } else {
+          alert(`⚠️ Có ${failedChunks} đợt ảnh không lưu được.`);
+          setStatus("⚠️ Một số ảnh không lưu được.");
+        }
+      }
+
+      async function preprocess() {
+        const res = await fetch("/preprocess_data", { method: "POST" });
+        const data = await res.json();
+        if (!data.success) alert("Lỗi khi tiền xử lý dữ liệu.");
+      }
+
+      async function trainModel() {
+        const res = await fetch("/train_model", { method: "POST" });
+        const data = await res.json();
+        if (!data.success) alert("Lỗi khi huấn luyện mô hình.");
+      }
+
+      document.getElementById("uploadImageButton").addEventListener("click", () => {
+        const studentId = studentIdInput.value;
+        const files = document.getElementById("imageUpload").files;
+
         if (!studentId) {
           alert("Vui lòng nhập mã số sinh viên.");
           return;
         }
 
-        // Gửi ảnh đến server để lưu
-        fetch("/save_images", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ studentId, images }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.success) {
-              alert("Ảnh đã được lưu thành công!");
-            } else {
-              alert("Có lỗi xảy ra khi lưu ảnh.");
-            }
-          })
-          .catch((error) => {
-            console.error("Error saving images: ", error);
-            alert("Có lỗi xảy ra khi gửi ảnh đến server.");
-          });
-      }
+        if (files.length === 0) {
+          alert("Vui lòng chọn ít nhất một ảnh.");
+          return;
+        }
 
-      document
-        .getElementById("uploadImageButton")
-        .addEventListener("click", () => {
-          const studentId = studentIdInput.value;
-          const files = document.getElementById("imageUpload").files;
+        const images = [];
+        const readerPromises = [];
 
-          if (!studentId) {
-            alert("Vui lòng nhập mã số sinh viên.");
-            return;
-          }
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const reader = new FileReader();
 
-          if (files.length === 0) {
-            alert("Vui lòng chọn ít nhất một ảnh.");
-            return;
-          }
+          readerPromises.push(new Promise((resolve) => {
+            reader.onload = (event) => {
+              images.push(event.target.result);
+              resolve();
+            };
+            reader.readAsDataURL(file);
+          }));
+        }
 
-          const images = [];
-          const readerPromises = [];
-
-          for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            const reader = new FileReader();
-
-            readerPromises.push(
-              new Promise((resolve) => {
-                reader.onload = (event) => {
-                  images.push(event.target.result);
-                  resolve();
-                };
-                reader.readAsDataURL(file);
-              })
-            );
-          }
-
-          Promise.all(readerPromises).then(() => {
-            saveImages(images);
-          });
-        });
-
-      document
-        .getElementById("preprocessButton")
-        .addEventListener("click", () => {
-          fetch("/preprocess_data", {
-            method: "POST",
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.success) {
-                alert("Tiền xử lý dữ liệu thành công!");
-              } else {
-                alert("Có lỗi xảy ra trong quá trình tiền xử lý.");
-              }
-            })
-            .catch((error) => {
-              console.error("Error during preprocessing: ", error);
-              alert("Có lỗi xảy ra khi gửi yêu cầu tiền xử lý.");
-            });
-        });
-
-      document.getElementById("trainButton").addEventListener("click", () => {
-        fetch("/train_model", {
-          method: "POST",
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.success) {
-              alert("Huấn luyện mô hình thành công!");
-            } else {
-              alert("Có lỗi xảy ra trong quá trình huấn luyện.");
-            }
-          })
-          .catch((error) => {
-            console.error("Error during training: ", error);
-            alert("Có lỗi xảy ra khi gửi yêu cầu huấn luyện.");
-          });
+        Promise.all(readerPromises).then(() => saveImages(images));
       });
     </script>
   </body>
