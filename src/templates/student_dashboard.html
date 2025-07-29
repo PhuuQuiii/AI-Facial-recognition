@@ -154,7 +154,7 @@
                 statusCell.innerHTML = '<i class="icon-tick"></i>';
               }
             } else {
-              console.error("Error updating attendance");
+              showNotification(data.message || "Lỗi cập nhật điểm danh");
             }
           });
       }
@@ -162,7 +162,24 @@
       const socket = io();
 
       // Gọi API cam python
-      async function openCamera(classId, date, element) {
+      async function openCamera(element) {
+        // Tìm thông tin lớp học từ data.schedule (lưu vào biến toàn cục hoặc truyền vào)
+        // Ta sẽ lấy startTime từ thuộc tính data-* của element hoặc truyền vào hàm
+        // Giả sử ta truyền startTime vào hàm openCamera
+        let startTime = element.getAttribute('data-starttime');
+        if (!startTime) {
+          showNotification('Không tìm thấy thời gian bắt đầu ca học!');
+          return;
+        }
+        // startTime dạng 'HH:mm', ví dụ '07:00'
+        const [startHour, startMinute] = startTime.split(':').map(Number);
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startHour, startMinute, 0);
+        const diffMinutes = (now - start) / 60000;
+        if (diffMinutes > 30) {
+          showNotification('Đã quá 30 phút đầu giờ bạn đã vắng =))');
+          return;
+        }
         try {
           // Mở webcam, chụp ảnh
           const video = document.createElement("video");
@@ -214,8 +231,8 @@
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                classId,
-                date,
+                classId: element.getAttribute('data-classid'), // Lấy classId từ data-classid
+                date: element.getAttribute('data-date'), // Lấy date từ data-date
                 image: imageData,
               }),
             });
@@ -411,7 +428,7 @@
                               </div>
                               ${
                                 cls.status === "Absent"
-                                  ? `<div class="icon-camera" onclick="openCamera('${cls.classId}', '${cls.date}', this)">
+                                  ? `<div class="icon-camera" onclick="openCamera(this)" data-classid="${cls.classId}" data-date="${cls.date}" data-starttime="${cls.startTime}">
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     fill="none"
