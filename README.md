@@ -30,3 +30,15 @@ python -m venv venv
 
 pip install -r requirements.txt
 
+
+
+// run project
+cd src
+python face_rec_flask.py
+
+cd src  
+python app_rec_cam.py
+
+cd CDCNpp
+python app_CDCNpp.py
+
