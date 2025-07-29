@@ -5,9 +5,65 @@
     <link rel="stylesheet" href="../static/css/styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Student Dashboard</title>
+    <style>
+        .session-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .validation-warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+        .error-message {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #721c24;
+            display: none;
+        }
+        .success-message {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #155724;
+            display: none;
+        }
+    </style>
   </head>
 
   <body>
+    <div class="container">
+        <!-- Thông tin session -->
+        <div class="session-info" id="sessionInfo">
+            <span> Đang tải thông tin...</span>
+        </div>
+
+        <!-- Cảnh báo validation -->
+        <div class="validation-warning">
+            <strong> Bảo mật điểm danh:</strong>
+            <p>• Hệ thống chỉ cho phép điểm danh bằng khuôn mặt của chính sinh viên đã đăng nhập</p>
+            <p>• Mọi hành vi gian lận sẽ được ghi lại và báo cáo</p>
+            <p>• Vui lòng đảm bảo chính bạn thực hiện điểm danh</p>
+        </div>
+
+        <!-- Hiển thị thành công -->
+        <div id="successMessage" class="success-message"></div>
+
+        <!-- Hiển thị lỗi validation -->
+        <div id="validationError" class="error-message"></div>
+    </div>
     <header class="header_sd">
       <div style="width: 100%">
         <div class="header-left">
@@ -128,6 +184,128 @@
     </footer>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
+      // KIỂM TRA SESSION KHI TRANG LOAD
+      window.onload = function() {
+          checkSession();
+      };
+
+      function checkSession() {
+          fetch('/check_session')
+              .then(response => response.json())
+              .then(data => {
+                  const sessionInfo = document.getElementById('sessionInfo');
+                  
+                  if (data.logged_in) {
+                      sessionInfo.innerHTML = `
+                          <div style="display: flex; justify-content: space-between; align-items: center;">
+                              <div>
+                                  <strong> Đã đăng nhập:</strong> ${data.student_name} (${data.student_id})
+                                  <br><small> Chỉ khuôn mặt của bạn mới được điểm danh</small>
+                              </div>
+                              <button class="logout-btn" onclick="logoutValidation()" style="background-color: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Đăng xuất</button>
+                          </div>
+                      `;
+                      
+                      // CẬP NHẬT THÔNG TIN HEADER
+                      document.getElementById("studentName").innerText = data.student_name;
+                      document.getElementById("MSSV").innerText = data.student_id;
+                      
+                      // LƯU VÀO sessionStorage
+                      sessionStorage.setItem("studentInfo", JSON.stringify({
+                          student_id: data.student_id,
+                          name: data.student_name
+                      }));
+                      
+                  } else {
+                      alert('Vui lòng đăng nhập trước khi sử dụng!');
+                      window.location.href = '/login_student';
+                  }
+              })
+              .catch(error => {
+                  console.error('Lỗi kiểm tra session:', error);
+                  alert('Lỗi kết nối. Vui lòng thử lại!');
+              });
+      }
+
+      function logoutValidation() {
+          if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+              fetch('/logout_student', { method: 'POST' })
+                  .then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          sessionStorage.removeItem("studentInfo");
+                          alert('Đăng xuất thành công!');
+                          window.location.href = '/login_student';
+                      }
+                  })
+                  .catch(error => {
+                      console.error('Lỗi đăng xuất:', error);
+                  });
+          }
+      }
+
+      // HÀM XỬ LÝ RESPONSE TỪ ĐIỂM DANH
+      function handleAttendanceResponse(response) {
+          const errorDiv = document.getElementById('validationError');
+          const successDiv = document.getElementById('successMessage');
+          
+          // Ẩn tất cả thông báo trước
+          if (errorDiv) errorDiv.style.display = 'none';
+          if (successDiv) successDiv.style.display = 'none';
+          
+          if (response.success) {
+              if (response.validation_passed) {
+                  if (successDiv) {
+                      successDiv.innerHTML = `
+                          <strong> Điểm danh thành công!</strong><br>
+                           Sinh viên: ${response.student_info.name} (${response.student_info.mssv})<br>
+                           Thời gian: ${new Date().toLocaleString('vi-VN')}
+                      `;
+                      successDiv.style.display = 'block';
+                      
+                      // Tự động ẩn sau 5 giây
+                      setTimeout(() => {
+                          successDiv.style.display = 'none';
+                      }, 5000);
+                  }
+                  alert(' Điểm danh thành công!');
+              } else {
+                  if (errorDiv) {
+                      errorDiv.innerHTML = `
+                          <strong> Điểm danh thất bại:</strong><br>
+                          ${response.message}
+                      `;
+                      errorDiv.style.display = 'block';
+                  }
+                  alert(' Điểm danh thất bại!');
+              }
+          } else {
+              if (response.validation_failed) {
+                  if (errorDiv) {
+                      errorDiv.innerHTML = `
+                          <strong> CẢNH BÁO GIAN LẬN:</strong><br>
+                          ${response.message.replace(/\n/g, '<br>')}<br>
+                          <small><em>Hành vi này đã được ghi lại trong hệ thống.</em></small>
+                      `;
+                      errorDiv.style.display = 'block';
+                  }
+                  alert(' PHÁT HIỆN GIAN LẬN ĐIỂM DANH!\n\n' + response.message);
+              } else if (response.redirect) {
+                  alert('Vui lòng đăng nhập trước khi điểm danh!');
+                  window.location.href = response.redirect;
+              } else {
+                  if (errorDiv) {
+                      errorDiv.innerHTML = `
+                          <strong> Lỗi hệ thống:</strong><br>
+                          ${response.message}
+                      `;
+                      errorDiv.style.display = 'block';
+                  }
+                  alert(' Lỗi: ' + response.message);
+              }
+          }
+      }
+
       function updateAttendance(mssv, status, classId, date, element) {
         const formattedDate = new Date(date).toISOString().split("T")[0];
         fetch("/update_attendance", {
@@ -164,6 +342,17 @@
       // Gọi API cam python
       async function openCamera(classId, date, element) {
         try {
+
+          // Kiểm tra session trước khi mở camera
+              const sessionCheck = await fetch('/check_session');
+              const sessionData = await sessionCheck.json();
+              
+              if (!sessionData.logged_in) {
+                  alert('Vui lòng đăng nhập trước khi điểm danh!');
+                  window.location.href = '/login_student';
+                  return;
+              }
+
           // Mở webcam, chụp ảnh
           const video = document.createElement("video");
           video.autoplay = true;
@@ -185,62 +374,107 @@
           video.srcObject = stream;
 
           // Tạo nút chụp ảnh
-          const captureBtn = document.createElement("button");
-          captureBtn.innerText = "Chụp ảnh";
-          captureBtn.style.position = "fixed";
-          captureBtn.style.top = "calc(50% + 180px)";
-          captureBtn.style.left = "50%";
-          captureBtn.style.transform = "translateX(-50%)";
-          captureBtn.style.zIndex = 10001;
-          document.body.appendChild(captureBtn);
+              const captureBtn = document.createElement("button");
+              captureBtn.innerText = " Chụp ảnh điểm danh";
+              captureBtn.style.position = "fixed";
+              captureBtn.style.top = "calc(50% + 180px)";
+              captureBtn.style.left = "50%";
+              captureBtn.style.transform = "translateX(-50%)";
+              captureBtn.style.zIndex = 10001;
+              captureBtn.style.background = "#28a745";
+              captureBtn.style.color = "white";
+              captureBtn.style.border = "none";
+              captureBtn.style.padding = "10px 20px";
+              captureBtn.style.borderRadius = "5px";
+              captureBtn.style.fontSize = "16px";
+              document.body.appendChild(captureBtn);
+
+          // Tạo nút hủy
+              const cancelBtn = document.createElement("button");
+              cancelBtn.innerText = " Hủy";
+              cancelBtn.style.position = "fixed";
+              cancelBtn.style.top = "calc(50% + 220px)";
+              cancelBtn.style.left = "50%";
+              cancelBtn.style.transform = "translateX(-50%)";
+              cancelBtn.style.zIndex = 10001;
+              cancelBtn.style.background = "#dc3545";
+              cancelBtn.style.color = "white";
+              cancelBtn.style.border = "none";
+              cancelBtn.style.padding = "8px 16px";
+              cancelBtn.style.borderRadius = "5px";
+              document.body.appendChild(cancelBtn);
+
+              cancelBtn.onclick = function() {
+                  stream.getTracks().forEach((track) => track.stop());
+                  video.remove();
+                  captureBtn.remove();
+                  cancelBtn.remove();
+              };
 
           captureBtn.onclick = async function () {
-            // Chụp ảnh từ video
-            const canvas = document.createElement("canvas");
-            canvas.width = video.videoWidth || 400;
-            canvas.height = video.videoHeight || 300;
-            canvas
-              .getContext("2d")
-              .drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = canvas.toDataURL("image/jpeg");
+                  try {
+                      // Chụp ảnh từ video
+                      const canvas = document.createElement("canvas");
+                      canvas.width = video.videoWidth || 400;
+                      canvas.height = video.videoHeight || 300;
+                      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+                      const imageData = canvas.toDataURL("image/jpeg");
 
-            // Dừng webcam
-            stream.getTracks().forEach((track) => track.stop());
-            video.remove();
-            captureBtn.remove();
+                      // Dừng webcam
+                      stream.getTracks().forEach((track) => track.stop());
+                      video.remove();
+                      captureBtn.remove();
+                      cancelBtn.remove();
 
-            // Gửi ảnh qua API open_camera
-            const response = await fetch("/open_camera", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                classId,
-                date,
-                image: imageData,
-              }),
-            });
-            const data = await response.json();
-            if (data.success) {
-              showNotification("Đã gửi ảnh lên server để nhận diện.");
-            } else {
-              showNotification("Lỗi gửi ảnh: " + (data.message || ""));
-            }
-          };
-        } catch (error) {
-          console.error("Lỗi khi mở camera:", error);
-          showNotification("Không thể mở webcam: " + error.message);
-        }
+                      // Hiển thị loading
+                      showNotification(" Đang xử lý điểm danh...");
+
+                      // Gửi ảnh qua API open_camera với validation
+                      const response = await fetch("/open_camera", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                              classId,
+                              date,
+                              image: imageData,
+                          }),
+                      });
+                      
+                      const data = await response.json();
+                      
+                      // Xử lý response với validation
+                      handleAttendanceResponse(data);
+                      
+                  } catch (error) {
+                      console.error("Lỗi khi xử lý điểm danh:", error);
+                      alert("Lỗi khi xử lý điểm danh: " + error.message);
+                  }
+              };
+          } catch (error) {
+              console.error("Lỗi khi mở camera:", error);
+              alert("Không thể mở webcam: " + error.message);
+          }
       }
 
       function showNotification(message) {
         const notification = document.createElement("div");
         notification.className = "notification";
         notification.innerText = message;
+        notification.style.position = "fixed";
+        notification.style.top = "20px";
+        notification.style.right = "20px";
+        notification.style.background = "#333";
+        notification.style.color = "white";
+        notification.style.padding = "10px 20px";
+        notification.style.borderRadius = "5px";
+        notification.style.zIndex = "10000";
         document.body.appendChild(notification);
 
         setTimeout(() => {
-          notification.remove();
-        }, 5000); // Thời gian hiển thị 5 giây
+          if (notification.parentNode) {
+            notification.remove();
+          }
+        }, 5000); // thời gian hiển thị 5 giây
       }
 
       // hiện tên và mssv

@@ -91,9 +91,13 @@ def recognize_face():
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
+    # LẤY THÔNG TIN VALIDATION
     date_param = request.form.get('date', str(datetime.date.today()))
     class_id_param = request.form.get('classId', 'default_class')
+    expected_mssv = request.form.get('expected_mssv', None)  
+    
     print(f"### DEBUG ###: Received request for date: {date_param}, classId: {class_id_param}")
+    print(f"### DEBUG ###: Expected MSSV for validation: {expected_mssv}")  
 
     try:
         img_stream = file.read()
@@ -137,7 +141,7 @@ def recognize_face():
 
         results = []
         recognition_success = False # Overall success if at least one face is confidently recognized
-        mssv_to_send = None
+        detected_mssv = None
 
         if faces_found > 0:
             det = bounding_boxes[:, 0:4] # x1, y1, x2, y2
@@ -210,11 +214,11 @@ def recognize_face():
                         "bbox": [int(b) for b in bb[i]] # Bounding box [x1, y1, x2, y2]
                     }
 
-                    if best_class_probabilities[0] > 0.70: # Confidence threshold for "known"
+                    # if best_class_probabilities[0] > 0.70: # Confidence threshold for "known"
+                    if best_class_probabilities[0] > 0.50: # Confidence threshold for "known"
                         recognition_success = True # Mark overall success
-                        if mssv_to_send is None:
-                            mssv_to_send = best_name
-                        # results.append(current_recognition) # Appended below
+                        detected_mssv = best_name  # LƯU MSSV ĐƯỢC NHẬN DIỆN
+                        break  # Dừng khi tìm được khuôn mặt đầu tiên với confidence cao
                     else:
                         current_recognition["MSSV"] = "Unknown" # If below threshold, classify as Unknown
                         current_recognition["original_prediction"] = best_name # Keep what it thought it was
@@ -232,37 +236,103 @@ def recognize_face():
         end_time = datetime.datetime.now()
         processing_time_ms = (end_time - start_time).total_seconds() * 1000
 
+         # VALIDATION LOGIC - THÊM PHẦN NÀY
+        validation_passed = False
+        if expected_mssv and detected_mssv:
+            if detected_mssv == expected_mssv:
+                validation_passed = True
+                print(f"### VALIDATION ###:  PASSED - Expected: {expected_mssv}, Detected: {detected_mssv}")
+                
+                # LƯU VÀO DATABASE CHỈ KHI VALIDATION THÀNH CÔNG
+                save_attendance_to_db(detected_mssv, class_id_param, date_param, "Present")
+                
+            else:
+                validation_passed = False
+                print(f"### VALIDATION ###:  FAILED - Expected: {expected_mssv}, Detected: {detected_mssv}")
+        elif not expected_mssv:
+            # Không có validation, chạy như cũ
+            validation_passed = recognition_success
+            print(f"### VALIDATION ###:  NO VALIDATION - Running in legacy mode")
+
+        # LƯU MSSV ĐỂ API get_last_mssv CÓ THỂ LẤY
+        if detected_mssv:
+            last_mssv = detected_mssv
+
         response_payload = {
-            "success": recognition_success,
+            "success": recognition_success and validation_passed,  # CẬP NHẬT LOGIC SUCCESS
             "message": "",
             "date": date_param,
             "classId": class_id_param,
             "recognitions": results,
             "faces_detected_count": faces_found,
             "processing_time_ms": round(processing_time_ms, 2),
-            "MSSV": mssv_to_send,
+            "MSSV": detected_mssv if validation_passed else None,  # CHỈ TRẢ VỀ KHI VALIDATION THÀNH CÔNG
+            "validation": {  # THÊM THÔNG TIN VALIDATION
+                "expected": expected_mssv,
+                "detected": detected_mssv,
+                "passed": validation_passed
+            }
         }
 
+        # CẬP NHẬT MESSAGE
         if faces_found == 0:
             response_payload["message"] = "No faces detected in the image."
-        elif not results and faces_found > 0: # Faces detected, but all resulted in errors or were skipped
-             response_payload["message"] = "Faces detected, but could not recognize or process any."
-        elif not recognition_success and faces_found > 0: # Faces processed, but none met high confidence
-            response_payload["message"] = "Recognition process completed, but no one identified with high confidence."
-        elif recognition_success:
-            response_payload["message"] = "Recognition process completed."
-        
-        # Lưu MSSV nhận diện gần nhất (nếu có)
-        if mssv_to_send:
-            last_mssv = mssv_to_send
+        elif not detected_mssv:
+            response_payload["message"] = "No one identified with high confidence."
+        elif not validation_passed and expected_mssv:
+            response_payload["message"] = f"Face recognition successful but validation failed. Expected: {expected_mssv}, Detected: {detected_mssv}"
+        elif validation_passed:
+            response_payload["message"] = "Recognition and validation successful."
+        else:
+            response_payload["message"] = "Recognition completed."
 
         return jsonify(response_payload), 200
 
     except Exception as e:
         print(f"### DEBUG ###: Critical Error in /recognize endpoint: {e}")
         import traceback
-        traceback.print_exc() # Print full traceback to Flask console
+        traceback.print_exc()
         return jsonify({"error": "An internal server error occurred", "details": str(e)}), 500
+    
+# THÊM HÀM MỚI ĐỂ LƯU VÀO DATABASE
+def save_attendance_to_db(student_id, class_id, date, status):
+    """Lưu điểm danh vào database"""
+    try:
+        import mysql.connector
+        connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
+        cursor = connection.cursor()
+        
+        # Kiểm tra xem đã có record chưa
+        cursor.execute("""
+            SELECT * FROM Attendance 
+            WHERE student_id = %s AND class_id = %s AND date = %s
+        """, (student_id, class_id, date))
+        
+        existing = cursor.fetchone()
+        
+        if existing:
+            # Update existing record
+            cursor.execute("""
+                UPDATE Attendance 
+                SET status = %s 
+                WHERE student_id = %s AND class_id = %s AND date = %s
+            """, (status, student_id, class_id, date))
+            print(f"### DATABASE ###: Updated attendance for {student_id}")
+        else:
+            # Insert new record
+            cursor.execute("""
+                INSERT INTO Attendance (student_id, class_id, date, status) 
+                VALUES (%s, %s, %s, %s)
+            """, (student_id, class_id, date, status))
+            print(f"### DATABASE ###: Inserted new attendance for {student_id}")
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        print(f"### DATABASE ###:  Đã lưu điểm danh: {student_id} - {status}")
+        
+    except Exception as e:
+        print(f"### DATABASE ###:  Database error: {e}")
 
 @app.route('/get_last_mssv', methods=['GET'])
 def get_last_mssv():

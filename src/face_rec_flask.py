@@ -17,8 +17,10 @@ import pickle
 from imutils.video import VideoStream
 import imutils
 import socket
-import requests  # Đã có
-from socketio import Client  # Thêm dòng này
+import requests  
+from socketio import Client  
+from functools import wraps  
+import logging  
 
 
 def get_local_ip():
@@ -32,7 +34,8 @@ def get_local_ip():
         s.close()
     return ip
 
-ALLOWED_IP = '192.168.1.9'  # IP WiFi được phép truy cập
+# ALLOWED_IP = '192.168.1.9'  # IP WiFi được phép truy cập
+ALLOWED_IP = '192.168.0.2'  # IP WiFi Phu Qui
 
 print("Chỉ cho phép truy cập từ IP:", ALLOWED_IP)
 
@@ -57,6 +60,37 @@ tf.compat.v1.disable_eager_execution()
 sess = tf.compat.v1.Session()
 facenet.load_model('../Models/20180402-114759.pb')
 
+
+# Cấu hình logging
+logging.basicConfig(
+    filename='attendance_validation.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+# Decorator kiểm tra session sinh viên
+def require_student_session(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'student_id' not in session:
+            return jsonify({
+                "success": False, 
+                "message": "Vui lòng đăng nhập trước khi điểm danh",
+                "redirect": "/login_student"
+            }), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+def log_attendance_attempt(logged_in_mssv, detected_mssv, success, class_id, date):
+    """Log các lần thử điểm danh để phát hiện gian lận"""
+    log_message = f"ATTENDANCE_ATTEMPT - Logged_in: {logged_in_mssv}, Detected: {detected_mssv}, Success: {success}, Class: {class_id}, Date: {date}"
+    
+    if success:
+        logging.info(log_message)
+    else:
+        logging.warning(f"FRAUD_ATTEMPT - {log_message}")
+    
+    print(log_message)
 
 @app.route('/')
 def home():
@@ -278,6 +312,28 @@ def update_attendance():
     return jsonify({"success": True, "message": status})
 
 
+
+
+@app.route('/check_session', methods=['GET'])
+def check_session():
+    """API để frontend kiểm tra trạng thái đăng nhập"""
+    if 'student_id' in session:
+        return jsonify({
+            "logged_in": True,
+            "student_id": session['student_id'],
+            "student_name": session['student_name']
+        })
+    else:
+        return jsonify({
+            "logged_in": False
+        })
+
+@app.route('/logout_student', methods=['POST'])
+def logout_student():
+    """API để sinh viên đăng xuất"""
+    session.clear()
+    return jsonify({"success": True, "message": "Đăng xuất thành công"})
+
 #Phần xư lý ip wifi học viện
 
 @app.before_request
@@ -334,12 +390,19 @@ def train_model():
 
 # Cam Python
 @app.route('/open_camera', methods=['POST'])
+@require_student_session  # Thêm decorator validation
 def open_camera():
     try:
         data = request.get_json()
         date = data.get('date')
         classId = data.get('classId')
         image_data = data.get('image')
+
+        # Lấy thông tin sinh viên từ session
+        logged_in_student_id = session.get('student_id')
+        logged_in_student_name = session.get('student_name')
+        
+        print(f" Sinh viên đã đăng nhập: {logged_in_student_id} - {logged_in_student_name}")
 
         # Nếu có ảnh từ web gửi lên thì giải mã và lưu tạm
         temp_img_path = None
@@ -371,14 +434,15 @@ def open_camera():
         if liveness_result and liveness_result.get('label') == 'Thật (Real)':
             print("Liveness PASSED. Calling recognition API...")
             
-            # Gọi API recognition với cùng file ảnh
+            # Gọi API recognition với cùng file ảnh và thêm expected_mssv
             recognition_result = None
             if temp_img_path and os.path.exists(temp_img_path):
                 with open(temp_img_path, 'rb') as img_file:
                     files = {'image': ('temp_web_capture.jpg', img_file, 'image/jpeg')}
                     form_data = {
                         'date': date,
-                        'classId': classId
+                        'classId': classId,
+                        'expected_mssv': logged_in_student_id  # THÊM VALIDATION KEY
                     }
                     try:
                         recognition_response = requests.post('http://127.0.0.1:5001/recognize', 
@@ -405,15 +469,36 @@ def open_camera():
             mssv_response = requests.get('http://127.0.0.1:5001/get_last_mssv', timeout=5)
             if mssv_response.ok:
                 mssv_result = mssv_response.json()
-                print("MSSV từ API /get_last_mssv:", mssv_result)
+                print(" MSSV từ API /get_last_mssv:", mssv_result)
                 if mssv_result.get("success") and mssv_result.get("MSSV"):
-                    mssv_value = mssv_result["MSSV"]
+                    detected_mssv = mssv_result["MSSV"]
+                    
+                    #  VALIDATION CHÍNH: So sánh MSSV nhận diện với MSSV đã đăng nhập
+                    if detected_mssv == logged_in_student_id:
+                        mssv_value = detected_mssv
+                        log_attendance_attempt(logged_in_student_id, detected_mssv, True, classId, date)
+                        print(f" VALIDATION PASSED: MSSV nhận diện ({detected_mssv}) khớp với sinh viên đã đăng nhập ({logged_in_student_id})")
+                    else:
+                        log_attendance_attempt(logged_in_student_id, detected_mssv, False, classId, date)
+                        print(f" VALIDATION FAILED: MSSV nhận diện ({detected_mssv}) KHÔNG khớp với sinh viên đã đăng nhập ({logged_in_student_id})")
+                        
+                        # Xóa file tạm
+                        if temp_img_path and os.path.exists(temp_img_path):
+                            os.remove(temp_img_path)
+                            
+                        return jsonify({
+                            "success": False, 
+                            "message": f"🚫 Phát hiện gian lận điểm danh!\n\n👤 Tài khoản đã đăng nhập: {logged_in_student_name} ({logged_in_student_id})\n Khuôn mặt được nhận diện: {detected_mssv}\n\n Vui lòng đảm bảo chính bạn thực hiện điểm danh!",
+                            "validation_failed": True,
+                            "expected": logged_in_student_id,
+                            "detected": detected_mssv
+                        })
             else:
-                print("Lỗi lấy MSSV từ API /get_last_mssv:", mssv_response.status_code)
+                print(" Lỗi lấy MSSV từ API /get_last_mssv:", mssv_response.status_code)
         except Exception as ex:
-            print("Exception khi gọi API lấy MSSV:", ex)
+            print(" Exception khi gọi API lấy MSSV:", ex)
 
-        # Gửi socket nếu có MSSV
+        # Gửi socket nếu validation thành công
         if mssv_value:
             try:
                 sio = Client()
@@ -422,147 +507,32 @@ def open_camera():
                     "success": True,
                     "MSSV": mssv_value,
                     "date": date,
-                    "classId": classId
+                    "classId": classId,
+                    "student_name": logged_in_student_name
                 })
-                print(f"Đã emit socket với MSSV: {mssv_value}, date: {date}, classId: {classId}")
+                print(f"Điểm danh thành công cho sinh viên: {logged_in_student_name}, {mssv_value}, date: {date}, classId: {classId}")
                 sio.disconnect()
             except Exception as ex:
                 print("Lỗi khi emit socketio:", ex)
 
-        return jsonify({"success": True, "liveness_result": liveness_result, "mssv_result": mssv_result})
+        # # Xóa file tạm
+        # if temp_img_path and os.path.exists(temp_img_path):
+        #     os.remove(temp_img_path)
+
+        return jsonify({
+            "success": True, 
+            "liveness_result": liveness_result, 
+            "mssv_result": mssv_result,
+            "validation_passed": mssv_value is not None,
+            "student_info": {
+                "mssv": logged_in_student_id,
+                "name": logged_in_student_name
+            }
+        })
     except Exception as e:
-        print(f"Error opening camera: {e}")
+        print(f" Error opening camera: {e}")
         return jsonify({"success": False, "message": str(e)})
-
-
-# # Production web
-# @app.route('/process_image', methods=['POST'])
-# def process_image():
-#     data = request.json
-#     image_data = data['image']
     
-#     if not image_data.startswith('data:image/jpeg;base64,'):
-#         return jsonify({"status": "error", "message": "Invalid image format"}), 400
-    
-#     # Chuyển đổi từ base64 về numpy array
-#     img_data = base64.b64decode(image_data.split(',')[1])
-#     np_arr = np.frombuffer(img_data, np.uint8)
-#     frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-
-#     # Xử lý nhận diện khuôn mặt
-#     MINSIZE = 20
-#     THRESHOLD = [0.6, 0.7, 0.7]
-#     FACTOR = 0.709
-#     INPUT_IMAGE_SIZE = 160  
-#     CLASSIFIER_PATH = '../Models/facemodel.pkl'
-#     FACENET_MODEL_PATH = '../Models/20180402-114759.pb'
-
-#     # Load The Custom Classifier
-#     with open(CLASSIFIER_PATH, 'rb') as file:
-#         model, class_names = pickle.load(file)
-#     # print("Custom Classifier, Successfully loaded")
-
-#     with tf.Graph().as_default():
-#         # Cài đặt GPU nếu có
-#         gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.6)
-#         sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options, log_device_placement=False))
-
-#         with sess.as_default():
-#             # Load the model
-#             # print('Loading feature extraction model')
-#             facenet.load_model(FACENET_MODEL_PATH)
-
-#             # Get input and output tensors
-#             images_placeholder = tf.compat.v1.get_default_graph().get_tensor_by_name("input:0")
-#             embeddings = tf.compat.v1.get_default_graph().get_tensor_by_name("embeddings:0")
-#             phase_train_placeholder = tf.compat.v1.get_default_graph().get_tensor_by_name("phase_train:0")
-
-#             # Phát hiện khuôn mặt
-#             pnet, rnet, onet = align.detect_face.create_mtcnn(sess, "../src/align")
-#             bounding_boxes, _ = align.detect_face.detect_face(frame, MINSIZE, pnet, rnet, onet, THRESHOLD, FACTOR)
-
-#             # if bounding_boxes.shape[0] == 0:
-#             #     return jsonify({"status": "no_face_detected"}), 200
-
-#             faces_found = bounding_boxes.shape[0]
-#             # print(f"Number of faces found: {faces_found}")
-#             if faces_found > 0:
-#                 for i in range(faces_found):
-#                     det = bounding_boxes[i]
-#                     bb = np.zeros((1, 4), dtype=np.int32)
-#                     bb[0][0] = int(det[0])
-#                     bb[0][1] = int(det[1])
-#                     bb[0][2] = int(det[2])
-#                     bb[0][3] = int(det[3])
-
-#                     # Cắt và tiền xử lý khuôn mặt
-#                     cropped = frame[bb[0][1]:bb[0][3], bb[0][0]:bb[0][2], :]
-#                     scaled = cv2.resize(cropped, (INPUT_IMAGE_SIZE, INPUT_IMAGE_SIZE), interpolation=cv2.INTER_CUBIC)
-#                     scaled = facenet.prewhiten(scaled)
-#                     scaled_reshape = scaled.reshape(-1, INPUT_IMAGE_SIZE, INPUT_IMAGE_SIZE, 3)
-
-#                     # Trích xuất đặc trưng khuôn mặt
-#                     feed_dict = {images_placeholder: scaled_reshape, phase_train_placeholder: False}
-#                     emb_array = sess.run(embeddings, feed_dict=feed_dict)
-
-#                     # Nhận diện khuôn mặt
-#                     predictions = model.predict_proba(emb_array)
-#                     best_class_indices = np.argmax(predictions, axis=1)
-#                     best_class_probabilities = predictions[np.arange(len(best_class_indices)), best_class_indices]
-#                     best_name = class_names[best_class_indices[0]]
-
-#                     if best_class_probabilities > 0.8:
-#                         print(f"Detected: {best_name} with probability: {best_class_probabilities}")
-#                         return jsonify({"MSSV": best_name, "status": "success"})
-#                     else:
-#                         print("Face not recognized.")
-#                         return jsonify({"status": "unknown"})
-
-#     return jsonify({"status": "no_face_detected"})
-
-# @socketio.on('image')
-# def handle_image(data):
-#     image_data = data.split(',')[1]
-#     img_data = base64.b64decode(image_data)
-#     np_arr = np.frombuffer(img_data, np.uint8)
-#     frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-
-#     # Xử lý nhận diện khuôn mặt
-#     bounding_boxes, _ = align.detect_face.detect_face(frame, MINSIZE, pnet, rnet, onet, THRESHOLD, FACTOR)
-#     faces_found = bounding_boxes.shape[0]
-
-#     if faces_found > 0:
-#         for i in range(faces_found):
-#             det = bounding_boxes[i]
-#             bb = np.zeros((1, 4), dtype=np.int32)
-#             bb[0][0] = int(det[0])
-#             bb[0][1] = int(det[1])
-#             bb[0][2] = int(det[2])
-#             bb[0][3] = int(det[3])
-
-#             cropped = frame[bb[0][1]:bb[0][3], bb[0][0]:bb[0][2], :]
-#             scaled = cv2.resize(cropped, (INPUT_IMAGE_SIZE, INPUT_IMAGE_SIZE), interpolation=cv2.INTER_CUBIC)
-#             scaled = facenet.prewhiten(scaled)
-#             scaled_reshape = scaled.reshape(-1, INPUT_IMAGE_SIZE, INPUT_IMAGE_SIZE, 3)
-
-#             feed_dict = {images_placeholder: scaled_reshape, phase_train_placeholder: False}
-#             emb_array = sess.run(embeddings, feed_dict=feed_dict)
-
-#             predictions = model.predict_proba(emb_array)
-#             best_class_indices = np.argmax(predictions, axis=1)
-#             best_class_probabilities = predictions[np.arange(len(best_class_indices)), best_class_indices]
-#             best_name = class_names[best_class_indices[0]]
-
-#             if best_class_probabilities > 0.8:
-#                 print(f"Detected: {best_name} with probability: {best_class_probabilities}")
-#                 emit('response', {"MSSV": best_name, "status": "success"})
-#                 return
-#             else:
-#                 print("Face not recognized.")
-#                 emit('response', {"status": "unknown"})
-#                 return
-
-#     emit('response', {"status": "no_face_detected"})
 
 def timedelta_to_string(td):
     total_seconds = int(td.total_seconds())

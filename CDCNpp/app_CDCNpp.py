@@ -45,7 +45,7 @@ app = Flask(__name__)
 MODEL_PATH = r'D:\E\DoANChuyenNganh\Facial_recognition\CDCNpp\CDCNpp_BinaryMask_P1_07_30.pkl'
 TRAINING_THETA_VALUE = 0.7
 # DECISION_THRESHOLD = 0.9
-DECISION_THRESHOLD = 0.8
+DECISION_THRESHOLD = 0.71
 
 actual_model = None
 device = None
