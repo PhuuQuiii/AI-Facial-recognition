@@ -22,7 +22,7 @@
 
 import unittest
 import tensorflow as tf
-import models
+import models1
 import numpy as np
 import numpy.testing as testing
 
@@ -40,7 +40,7 @@ class BatchNormTest(unittest.TestCase):
         # generate random noise to pass into batch norm
         #x_gen = tf.random_normal([50,20,20,10])
         
-        bn = models.network.batch_norm(x, phase_train)
+        bn = models1.network.batch_norm(x, phase_train)
         
         init = tf.global_variables_initializer()
         sess = tf.Session(config=tf.ConfigProto())

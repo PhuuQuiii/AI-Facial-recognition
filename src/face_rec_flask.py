@@ -32,7 +32,7 @@ def get_local_ip():
         s.close()
     return ip
 
-ALLOWED_IP = '192.168.1.9'  # IP WiFi được phép truy cập
+ALLOWED_IP = '192.168.1.151'  # IP WiFi được phép truy cập
 
 print("Chỉ cho phép truy cập từ IP:", ALLOWED_IP)
 
@@ -265,7 +265,35 @@ def update_attendance():
     # Kết nối cơ sở dữ liệu
     connection = mysql.connector.connect(host='localhost', user='root', database='face_recognition')
     cursor = connection.cursor()
-        # Nếu bản ghi tồn tại, cập nhật trạng thái
+
+    # Lấy startTime từ Attendance (hoặc Class nếu cần)
+    cursor.execute("""
+        SELECT startTime FROM Attendance
+        WHERE student_id = %s AND class_id = %s AND date = %s
+    """, (mssv, class_id, date))
+    result = cursor.fetchone()
+    if not result:
+        cursor.close()
+        connection.close()
+        return jsonify({"success": False, "message": "Không tìm thấy thông tin buổi học."}), 404
+
+    start_time = result[0]  # kiểu datetime.time hoặc timedelta
+    now = datetime.now().time()
+    # Chuyển đổi start_time sang datetime nếu cần
+    if isinstance(start_time, timedelta):
+        start_time = (datetime.min + start_time).time()
+
+    # Tính chênh lệch phút
+    start_dt = datetime.combine(datetime.today(), start_time)
+    now_dt = datetime.combine(datetime.today(), now)
+    diff_minutes = (now_dt - start_dt).total_seconds() / 60
+
+    if diff_minutes > 30:
+        cursor.close()
+        connection.close()
+        return jsonify({"success": False, "message": "Đã quá 30 phút đầu giờ bạn đã vắng =))"}), 403
+
+    # Nếu trong 30 phút đầu, cho phép điểm danh
     cursor.execute("""
         UPDATE Attendance 
         SET status = %s 

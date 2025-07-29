@@ -218,7 +218,7 @@ def prediction_thread_worker(model, device, frame_input_queue, result_output_que
 
 def main():
     # Đường dẫn tới model của bạn - THAY ĐỔI NẾU CẦN
-    model_path = r"D:\E\DoANChuyenNganh\Facial_recognition\CDCNpp\CDCNpp_BinaryMask_P1_07_60.pkl" # Sử dụng đường dẫn tương đối hoặc tuyệt đối
+    model_path = r"D:\NHATTRUONG\VAA\NCKH\AI-Facial-recognition\CDCNpp\CDCNpp_BinaryMask_P1_07_30.pkl" # Sử dụng đường dẫn tương đối hoặc tuyệt đối
     # model_path = r"/Users/bduong/Documents/CDCN/FAS_challenge_CVPRW2020/Track2_Single-modal/model1_pytorch/CDCNpp_BinaryMask_P1_07/CDCNpp_BinaryMask_P1_07_30.pkl"
 
     # Giá trị theta được sử dụng khi huấn luyện model (từ args.theta của train_test, mặc định là 0.7)
