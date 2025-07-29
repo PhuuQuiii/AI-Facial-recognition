@@ -6,63 +6,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Student Dashboard</title>
     <style>
-        .session-info {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .validation-warning {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 20px;
-            color: #856404;
-        }
-        .error-message {
-            background-color: #f8d7da;
-            border-left: 4px solid #dc3545;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 20px;
-            color: #721c24;
-            display: none;
-        }
-        .success-message {
-            background-color: #d4edda;
-            border-left: 4px solid #28a745;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 20px;
-            color: #155724;
-            display: none;
-        }
+      .session-info {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .validation-warning {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+        color: #856404;
+      }
+      .error-message {
+        background-color: #f8d7da;
+        border-left: 4px solid #dc3545;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+        color: #721c24;
+        display: none;
+      }
+      .success-message {
+        background-color: #d4edda;
+        border-left: 4px solid #28a745;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+        color: #155724;
+        display: none;
+      }
     </style>
   </head>
 
   <body>
     <div class="container">
-        <!-- Thông tin session -->
-        <div class="session-info" id="sessionInfo">
-            <span> Đang tải thông tin...</span>
-        </div>
+      <!-- Thông tin session -->
+      <div class="session-info" id="sessionInfo">
+        <span> Đang tải thông tin...</span>
+      </div>
 
-        <!-- Cảnh báo validation -->
-        <div class="validation-warning">
-            <strong> Bảo mật điểm danh:</strong>
-            <p>• Hệ thống chỉ cho phép điểm danh bằng khuôn mặt của chính sinh viên đã đăng nhập</p>
-            <p>• Mọi hành vi gian lận sẽ được ghi lại và báo cáo</p>
-            <p>• Vui lòng đảm bảo chính bạn thực hiện điểm danh</p>
-        </div>
+      <!-- Cảnh báo validation -->
+      <div class="validation-warning">
+        <strong> Bảo mật điểm danh:</strong>
+        <p>
+          • Hệ thống chỉ cho phép điểm danh bằng khuôn mặt của chính sinh viên
+          đã đăng nhập
+        </p>
+        <p>• Mọi hành vi gian lận sẽ được ghi lại và báo cáo</p>
+        <p>• Vui lòng đảm bảo chính bạn thực hiện điểm danh</p>
+      </div>
 
-        <!-- Hiển thị thành công -->
-        <div id="successMessage" class="success-message"></div>
+      <!-- Hiển thị thành công -->
+      <div id="successMessage" class="success-message"></div>
 
-        <!-- Hiển thị lỗi validation -->
-        <div id="validationError" class="error-message"></div>
+      <!-- Hiển thị lỗi validation -->
+      <div id="validationError" class="error-message"></div>
     </div>
     <header class="header_sd">
       <div style="width: 100%">
@@ -185,125 +188,358 @@
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
       // KIỂM TRA SESSION KHI TRANG LOAD
-      window.onload = function() {
-          checkSession();
+      window.onload = function () {
+        checkSession();
+
+        // Xác thực GPS sau khi kiểm tra session
+        setTimeout(verifyGPSLocation, 1000);
       };
 
       function checkSession() {
-          fetch('/check_session')
-              .then(response => response.json())
-              .then(data => {
-                  const sessionInfo = document.getElementById('sessionInfo');
-                  
-                  if (data.logged_in) {
-                      sessionInfo.innerHTML = `
-                          <div style="display: flex; justify-content: space-between; align-items: center;">
-                              <div>
-                                  <strong> Đã đăng nhập:</strong> ${data.student_name} (${data.student_id})
-                                  <br><small> Chỉ khuôn mặt của bạn mới được điểm danh</small>
-                              </div>
-                              <button class="logout-btn" onclick="logoutValidation()" style="background-color: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Đăng xuất</button>
-                          </div>
-                      `;
-                      
-                      // CẬP NHẬT THÔNG TIN HEADER
-                      document.getElementById("studentName").innerText = data.student_name;
-                      document.getElementById("MSSV").innerText = data.student_id;
-                      
-                      // LƯU VÀO sessionStorage
-                      sessionStorage.setItem("studentInfo", JSON.stringify({
-                          student_id: data.student_id,
-                          name: data.student_name
-                      }));
-                      
-                  } else {
-                      alert('Vui lòng đăng nhập trước khi sử dụng!');
-                      window.location.href = '/login_student';
-                  }
-              })
-              .catch(error => {
-                  console.error('Lỗi kiểm tra session:', error);
-                  alert('Lỗi kết nối. Vui lòng thử lại!');
-              });
+        fetch("/check_session")
+          .then((response) => response.json())
+          .then((data) => {
+            const sessionInfo = document.getElementById("sessionInfo");
+
+            if (data.logged_in) {
+              sessionInfo.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <strong> Đã đăng nhập:</strong> ${data.student_name} (${data.student_id})
+                <br><small> Chỉ khuôn mặt của bạn mới được điểm danh</small>
+            </div>
+            <button class="logout-btn" onclick="logoutValidation()" style="background-color: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Đăng xuất</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <button id="refreshLocationBtn" style="background-color: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+                Cập nhật vị trí GPS
+            </button>
+        </div>
+    `;
+
+              // Gắn sự kiện cho nút làm mới vị trí
+              setTimeout(() => {
+                const refreshBtn =
+                  document.getElementById("refreshLocationBtn");
+                if (refreshBtn) {
+                  refreshBtn.addEventListener("click", function () {
+                    verifyGPSLocation();
+
+                    // Kích hoạt lại các nút nếu xác thực thành công
+                    if (gpsVerified) {
+                      const cameraButtons =
+                        document.querySelectorAll(".icon-camera");
+                      cameraButtons.forEach((button) => {
+                        button.style.opacity = "1";
+                        button.style.cursor = "pointer";
+
+                        // Khôi phục onclick ban đầu nếu đã lưu
+                        if (button.dataset.originalOnclick) {
+                          button.setAttribute(
+                            "onclick",
+                            button.dataset.originalOnclick
+                          );
+                        }
+                      });
+                    }
+                  });
+                }
+              }, 500);
+
+              // CẬP NHẬT THÔNG TIN HEADER
+              document.getElementById("studentName").innerText =
+                data.student_name;
+              document.getElementById("MSSV").innerText = data.student_id;
+
+              // LƯU VÀO sessionStorage
+              sessionStorage.setItem(
+                "studentInfo",
+                JSON.stringify({
+                  student_id: data.student_id,
+                  name: data.student_name,
+                })
+              );
+            } else {
+              alert("Vui lòng đăng nhập trước khi sử dụng!");
+              window.location.href = "/login_student";
+            }
+          })
+          .catch((error) => {
+            console.error("Lỗi kiểm tra session:", error);
+            alert("Lỗi kết nối. Vui lòng thử lại!");
+          });
       }
 
-      function logoutValidation() {
-          if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-              fetch('/logout_student', { method: 'POST' })
-                  .then(response => response.json())
-                  .then(data => {
-                      if (data.success) {
-                          sessionStorage.removeItem("studentInfo");
-                          alert('Đăng xuất thành công!');
-                          window.location.href = '/login_student';
-                      }
-                  })
-                  .catch(error => {
-                      console.error('Lỗi đăng xuất:', error);
-                  });
+      // Thêm biến toàn cục để theo dõi trạng thái xác thực GPS
+      let gpsVerified = false;
+      // Hàm xác thực vị trí GPS
+      function verifyGPSLocation() {
+        // Hiển thị thông báo đang xác thực vị trí
+        const sessionInfo = document.getElementById("sessionInfo");
+        if (sessionInfo) {
+          sessionInfo.innerHTML += `
+            <div id="locationStatus" style="margin-top: 10px; padding: 8px; background-color: #fff3cd; border-radius: 4px;">
+                <strong>Đang xác thực vị trí...</strong>
+            </div>
+        `;
+        }
+
+        if (!navigator.geolocation) {
+          updateLocationStatus(
+            false,
+            "Trình duyệt của bạn không hỗ trợ định vị GPS."
+          );
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          // Callback thành công
+          function (position) {
+            // Thêm một số phát hiện giả mạo cơ bản
+            const coords = position.coords;
+
+            // Nếu accuracy > 100, nghĩa là định vị không chính xác, sai số quá lớn (có thể đang dùng GPS ảo hoặc trình giả lập).
+            if (coords.accuracy > 100) {
+              updateLocationStatus(
+                false,
+                "Độ chính xác GPS quá thấp. Vui lòng đảm bảo GPS hoạt động đúng cách."
+              );
+              disableAttendanceButtons();
+              return;
+            }
+
+            // Kiểm tra tốc độ di chuyển không thể có nếu có tọa độ trước đó
+            if (window.lastPosition) {
+              const timeDiff =
+                (position.timestamp - window.lastPosition.timestamp) / 1000; // giây
+              const distance = calculateClientDistance(
+                coords.latitude,
+                coords.longitude,
+                window.lastPosition.coords.latitude,
+                window.lastPosition.coords.longitude
+              );
+              const speed = distance / timeDiff; // mét/giây
+
+              // Nếu tốc độ > 100 m/s (~360 km/h), có thể là giả mạo -- RẤT KHÓ XẢY RA (trừ khi đang đi máy bay ) -->
+              // chỉ ra việc chuyển vị trí giả mạo (teleport) mà không thực tế, thường gặp ở các ứng dụng fake GPS.
+              if (timeDiff > 0 && speed > 100) {
+                updateLocationStatus(
+                  false,
+                  "Phát hiện thay đổi vị trí bất thường. Vui lòng không sử dụng GPS giả."
+                );
+                disableAttendanceButtons();
+                return;
+              }
+            }
+
+            // Lưu vị trí cho kiểm tra trong tương lai
+            window.lastPosition = {
+              coords: {
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+              },
+              timestamp: position.timestamp,
+            };
+
+            // Gửi tọa độ đến server để xác thực
+            fetch("/verify_location", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(coords),
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                gpsVerified = data.verified;
+                updateLocationStatus(data.verified, data.message);
+
+                // Nếu không xác thực được, vô hiệu hóa chức năng điểm danh
+                if (!data.verified) {
+                  disableAttendanceButtons();
+                }
+              })
+              .catch((error) => {
+                console.error("Lỗi kết nối khi xác thực vị trí:", error);
+                updateLocationStatus(false, "Lỗi kết nối khi xác thực vị trí.");
+                disableAttendanceButtons();
+              });
+          },
+          // Callback lỗi
+          function (error) {
+            let errorMessage = "Không thể xác định vị trí GPS.";
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage =
+                  "Bạn đã từ chối cấp quyền truy cập vị trí. Vui lòng cấp quyền và tải lại trang.";
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = "Thông tin vị trí không khả dụng.";
+                break;
+              case error.TIMEOUT:
+                errorMessage = "Quá thời gian yêu cầu vị trí.";
+                break;
+            }
+            updateLocationStatus(false, errorMessage);
+            disableAttendanceButtons();
+          },
+          // Tùy chọn
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
           }
+        );
+      }
+
+      // Thêm hàm tính khoảng cách ở phía client
+      function calculateClientDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371000; // Bán kính trái đất tính bằng mét
+        const dLat = deg2rad(lat2 - lat1);
+        const dLon = deg2rad(lon2 - lon1);
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(deg2rad(lat1)) *
+            Math.cos(deg2rad(lat2)) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c; // Khoảng cách tính bằng mét
+      }
+
+      function deg2rad(deg) {
+        return deg * (Math.PI / 180);
+      }
+
+      // Hàm cập nhật hiển thị trạng thái vị trí
+      function updateLocationStatus(verified, message) {
+        const locationStatus = document.getElementById("locationStatus");
+        if (locationStatus) {
+          locationStatus.style.backgroundColor = verified
+            ? "#d4edda"
+            : "#f8d7da";
+          locationStatus.style.color = verified ? "#155724" : "#721c24";
+          locationStatus.innerHTML = `<strong>${
+            verified ? "✓ " : "✗ "
+          } ${message}</strong>`;
+        }
+      }
+
+      // Hàm vô hiệu hóa nút điểm danh nếu xác thực vị trí thất bại
+      function disableAttendanceButtons() {
+        const cameraButtons = document.querySelectorAll(".icon-camera");
+        cameraButtons.forEach((button) => {
+          button.style.opacity = "0.5";
+          button.style.cursor = "not-allowed";
+
+          // Lưu trữ hàm onclick ban đầu
+          button.dataset.originalOnclick = button.getAttribute("onclick");
+
+          // Thay thế bằng hàm hiển thị lỗi
+          button.setAttribute("onclick", "showLocationError()");
+        });
+      }
+
+      // Hàm hiển thị lỗi vị trí khi cố gắng sử dụng nút đã bị vô hiệu hóa
+      function showLocationError() {
+        alert(
+          "Bạn cần có mặt tại trường để thực hiện điểm danh. Vui lòng kiểm tra vị trí GPS của bạn."
+        );
+      }
+
+      // Ghi đè hàm openCamera để kiểm tra xác thực GPS trước
+      const originalOpenCamera = openCamera;
+      openCamera = function (classId, date, element) {
+        if (!gpsVerified) {
+          alert(
+            "Bạn cần có mặt tại trường để thực hiện điểm danh. Vui lòng kiểm tra vị trí GPS của bạn."
+          );
+          return;
+        }
+
+        // Gọi hàm gốc
+        originalOpenCamera(classId, date, element);
+      };
+
+      function logoutValidation() {
+        if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+          fetch("/logout_student", { method: "POST" })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                sessionStorage.removeItem("studentInfo");
+                alert("Đăng xuất thành công!");
+                window.location.href = "/login_student";
+              }
+            })
+            .catch((error) => {
+              console.error("Lỗi đăng xuất:", error);
+            });
+        }
       }
 
       // HÀM XỬ LÝ RESPONSE TỪ ĐIỂM DANH
       function handleAttendanceResponse(response) {
-          const errorDiv = document.getElementById('validationError');
-          const successDiv = document.getElementById('successMessage');
-          
-          // Ẩn tất cả thông báo trước
-          if (errorDiv) errorDiv.style.display = 'none';
-          if (successDiv) successDiv.style.display = 'none';
-          
-          if (response.success) {
-              if (response.validation_passed) {
-                  if (successDiv) {
-                      successDiv.innerHTML = `
+        const errorDiv = document.getElementById("validationError");
+        const successDiv = document.getElementById("successMessage");
+
+        // Ẩn tất cả thông báo trước
+        if (errorDiv) errorDiv.style.display = "none";
+        if (successDiv) successDiv.style.display = "none";
+
+        if (response.success) {
+          if (response.validation_passed) {
+            if (successDiv) {
+              successDiv.innerHTML = `
                           <strong> Điểm danh thành công!</strong><br>
-                           Sinh viên: ${response.student_info.name} (${response.student_info.mssv})<br>
-                           Thời gian: ${new Date().toLocaleString('vi-VN')}
+                           Sinh viên: ${response.student_info.name} (${
+                response.student_info.mssv
+              })<br>
+                           Thời gian: ${new Date().toLocaleString("vi-VN")}
                       `;
-                      successDiv.style.display = 'block';
-                      
-                      // Tự động ẩn sau 5 giây
-                      setTimeout(() => {
-                          successDiv.style.display = 'none';
-                      }, 5000);
-                  }
-                  alert(' Điểm danh thành công!');
-              } else {
-                  if (errorDiv) {
-                      errorDiv.innerHTML = `
+              successDiv.style.display = "block";
+
+              // Tự động ẩn sau 5 giây
+              setTimeout(() => {
+                successDiv.style.display = "none";
+              }, 5000);
+            }
+            alert(" Điểm danh thành công!");
+          } else {
+            if (errorDiv) {
+              errorDiv.innerHTML = `
                           <strong> Điểm danh thất bại:</strong><br>
                           ${response.message}
                       `;
-                      errorDiv.style.display = 'block';
-                  }
-                  alert(' Điểm danh thất bại!');
-              }
-          } else {
-              if (response.validation_failed) {
-                  if (errorDiv) {
-                      errorDiv.innerHTML = `
+              errorDiv.style.display = "block";
+            }
+            alert(" Điểm danh thất bại!");
+          }
+        } else {
+          if (response.validation_failed) {
+            if (errorDiv) {
+              errorDiv.innerHTML = `
                           <strong> CẢNH BÁO GIAN LẬN:</strong><br>
-                          ${response.message.replace(/\n/g, '<br>')}<br>
+                          ${response.message.replace(/\n/g, "<br>")}<br>
                           <small><em>Hành vi này đã được ghi lại trong hệ thống.</em></small>
                       `;
-                      errorDiv.style.display = 'block';
-                  }
-                  alert(' PHÁT HIỆN GIAN LẬN ĐIỂM DANH!\n\n' + response.message);
-              } else if (response.redirect) {
-                  alert('Vui lòng đăng nhập trước khi điểm danh!');
-                  window.location.href = response.redirect;
-              } else {
-                  if (errorDiv) {
-                      errorDiv.innerHTML = `
+              errorDiv.style.display = "block";
+            }
+            alert(" PHÁT HIỆN GIAN LẬN ĐIỂM DANH!\n\n" + response.message);
+          } else if (response.redirect) {
+            alert("Vui lòng đăng nhập trước khi điểm danh!");
+            window.location.href = response.redirect;
+          } else {
+            if (errorDiv) {
+              errorDiv.innerHTML = `
                           <strong> Lỗi hệ thống:</strong><br>
                           ${response.message}
                       `;
-                      errorDiv.style.display = 'block';
-                  }
-                  alert(' Lỗi: ' + response.message);
-              }
+              errorDiv.style.display = "block";
+            }
+            alert(" Lỗi: " + response.message);
           }
+        }
       }
 
       function updateAttendance(mssv, status, classId, date, element) {
@@ -342,16 +578,15 @@
       // Gọi API cam python
       async function openCamera(classId, date, element) {
         try {
-
           // Kiểm tra session trước khi mở camera
-              const sessionCheck = await fetch('/check_session');
-              const sessionData = await sessionCheck.json();
-              
-              if (!sessionData.logged_in) {
-                  alert('Vui lòng đăng nhập trước khi điểm danh!');
-                  window.location.href = '/login_student';
-                  return;
-              }
+          const sessionCheck = await fetch("/check_session");
+          const sessionData = await sessionCheck.json();
+
+          if (!sessionData.logged_in) {
+            alert("Vui lòng đăng nhập trước khi điểm danh!");
+            window.location.href = "/login_student";
+            return;
+          }
 
           // Mở webcam, chụp ảnh
           const video = document.createElement("video");
@@ -374,86 +609,87 @@
           video.srcObject = stream;
 
           // Tạo nút chụp ảnh
-              const captureBtn = document.createElement("button");
-              captureBtn.innerText = " Chụp ảnh điểm danh";
-              captureBtn.style.position = "fixed";
-              captureBtn.style.top = "calc(50% + 180px)";
-              captureBtn.style.left = "50%";
-              captureBtn.style.transform = "translateX(-50%)";
-              captureBtn.style.zIndex = 10001;
-              captureBtn.style.background = "#28a745";
-              captureBtn.style.color = "white";
-              captureBtn.style.border = "none";
-              captureBtn.style.padding = "10px 20px";
-              captureBtn.style.borderRadius = "5px";
-              captureBtn.style.fontSize = "16px";
-              document.body.appendChild(captureBtn);
+          const captureBtn = document.createElement("button");
+          captureBtn.innerText = " Chụp ảnh điểm danh";
+          captureBtn.style.position = "fixed";
+          captureBtn.style.top = "calc(50% + 180px)";
+          captureBtn.style.left = "50%";
+          captureBtn.style.transform = "translateX(-50%)";
+          captureBtn.style.zIndex = 10001;
+          captureBtn.style.background = "#28a745";
+          captureBtn.style.color = "white";
+          captureBtn.style.border = "none";
+          captureBtn.style.padding = "10px 20px";
+          captureBtn.style.borderRadius = "5px";
+          captureBtn.style.fontSize = "16px";
+          document.body.appendChild(captureBtn);
 
           // Tạo nút hủy
-              const cancelBtn = document.createElement("button");
-              cancelBtn.innerText = " Hủy";
-              cancelBtn.style.position = "fixed";
-              cancelBtn.style.top = "calc(50% + 220px)";
-              cancelBtn.style.left = "50%";
-              cancelBtn.style.transform = "translateX(-50%)";
-              cancelBtn.style.zIndex = 10001;
-              cancelBtn.style.background = "#dc3545";
-              cancelBtn.style.color = "white";
-              cancelBtn.style.border = "none";
-              cancelBtn.style.padding = "8px 16px";
-              cancelBtn.style.borderRadius = "5px";
-              document.body.appendChild(cancelBtn);
+          const cancelBtn = document.createElement("button");
+          cancelBtn.innerText = " Hủy";
+          cancelBtn.style.position = "fixed";
+          cancelBtn.style.top = "calc(50% + 220px)";
+          cancelBtn.style.left = "50%";
+          cancelBtn.style.transform = "translateX(-50%)";
+          cancelBtn.style.zIndex = 10001;
+          cancelBtn.style.background = "#dc3545";
+          cancelBtn.style.color = "white";
+          cancelBtn.style.border = "none";
+          cancelBtn.style.padding = "8px 16px";
+          cancelBtn.style.borderRadius = "5px";
+          document.body.appendChild(cancelBtn);
 
-              cancelBtn.onclick = function() {
-                  stream.getTracks().forEach((track) => track.stop());
-                  video.remove();
-                  captureBtn.remove();
-                  cancelBtn.remove();
-              };
+          cancelBtn.onclick = function () {
+            stream.getTracks().forEach((track) => track.stop());
+            video.remove();
+            captureBtn.remove();
+            cancelBtn.remove();
+          };
 
           captureBtn.onclick = async function () {
-                  try {
-                      // Chụp ảnh từ video
-                      const canvas = document.createElement("canvas");
-                      canvas.width = video.videoWidth || 400;
-                      canvas.height = video.videoHeight || 300;
-                      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
-                      const imageData = canvas.toDataURL("image/jpeg");
+            try {
+              // Chụp ảnh từ video
+              const canvas = document.createElement("canvas");
+              canvas.width = video.videoWidth || 400;
+              canvas.height = video.videoHeight || 300;
+              canvas
+                .getContext("2d")
+                .drawImage(video, 0, 0, canvas.width, canvas.height);
+              const imageData = canvas.toDataURL("image/jpeg");
 
-                      // Dừng webcam
-                      stream.getTracks().forEach((track) => track.stop());
-                      video.remove();
-                      captureBtn.remove();
-                      cancelBtn.remove();
+              // Dừng webcam
+              stream.getTracks().forEach((track) => track.stop());
+              video.remove();
+              captureBtn.remove();
+              cancelBtn.remove();
 
-                      // Hiển thị loading
-                      showNotification(" Đang xử lý điểm danh...");
+              // Hiển thị loading
+              showNotification(" Đang xử lý điểm danh...");
 
-                      // Gửi ảnh qua API open_camera với validation
-                      const response = await fetch("/open_camera", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                              classId,
-                              date,
-                              image: imageData,
-                          }),
-                      });
-                      
-                      const data = await response.json();
-                      
-                      // Xử lý response với validation
-                      handleAttendanceResponse(data);
-                      
-                  } catch (error) {
-                      console.error("Lỗi khi xử lý điểm danh:", error);
-                      alert("Lỗi khi xử lý điểm danh: " + error.message);
-                  }
-              };
-          } catch (error) {
-              console.error("Lỗi khi mở camera:", error);
-              alert("Không thể mở webcam: " + error.message);
-          }
+              // Gửi ảnh qua API open_camera với validation
+              const response = await fetch("/open_camera", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  classId,
+                  date,
+                  image: imageData,
+                }),
+              });
+
+              const data = await response.json();
+
+              // Xử lý response với validation
+              handleAttendanceResponse(data);
+            } catch (error) {
+              console.error("Lỗi khi xử lý điểm danh:", error);
+              alert("Lỗi khi xử lý điểm danh: " + error.message);
+            }
+          };
+        } catch (error) {
+          console.error("Lỗi khi mở camera:", error);
+          alert("Không thể mở webcam: " + error.message);
+        }
       }
 
       function showNotification(message) {

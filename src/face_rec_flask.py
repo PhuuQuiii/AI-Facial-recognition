@@ -21,6 +21,7 @@ import requests
 from socketio import Client  
 from functools import wraps  
 import logging  
+import math
 
 
 def get_local_ip():
@@ -55,10 +56,36 @@ INPUT_IMAGE_SIZE = 160
 CLASSIFIER_PATH = '../Models/facemodel.pkl'
 FACENET_MODEL_PATH = '../Models/20180402-114759.pb'
 
+# Thêm các biến toàn cục sau phần "Các biến toàn cục cần thiết"
+# Tọa độ GPS của trường (thay thế bằng tọa độ thực tế của trường bạn)
+# SCHOOL_LATITUDE = 10.729262764533999  # vĩ độ của ở nhà Quí
+# SCHOOL_LONGITUDE = 106.7094491489029  # kinh độ của ở nhà Quí
+SCHOOL_LATITUDE = 10.7998684  # vĩ độ của trường
+SCHOOL_LONGITUDE = 106.654643  # kinh độ của trường
+MAX_DISTANCE_METERS = 500  # Khoảng cách tối đa cho phép từ trường (mét)
+
 # Khởi tạo TensorFlow và model FaceNet
 tf.compat.v1.disable_eager_execution()
 sess = tf.compat.v1.Session()
 facenet.load_model('../Models/20180402-114759.pb')
+
+# Hàm tính khoảng cách giữa hai tọa độ GPS
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """
+    Tính khoảng cách Haversine giữa hai điểm trên trái đất
+    (được chỉ định bằng độ thập phân)
+    """
+    # Chuyển đổi độ thập phân sang radian
+    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+    
+    # Công thức Haversine
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    c = 2 * math.asin(math.sqrt(a))
+    r = 6371000  # Bán kính trái đất tính bằng mét
+    return c * r
+
 
 
 # Cấu hình logging
@@ -91,6 +118,48 @@ def log_attendance_attempt(logged_in_mssv, detected_mssv, success, class_id, dat
         logging.warning(f"FRAUD_ATTEMPT - {log_message}")
     
     print(log_message)
+
+
+@app.route('/verify_location', methods=['POST'])
+def verify_location():
+    try:
+        data = request.get_json()
+        latitude = data.get('latitude')
+        longitude = data.get('longitude')
+        accuracy = data.get('accuracy', 0)
+        
+        if not latitude or not longitude:
+            return jsonify({
+                "verified": False,
+                "message": "Không thể xác định vị trí GPS. Vui lòng bật GPS và cấp quyền truy cập vị trí."
+            })
+            
+        # Tính khoảng cách từ trường
+        distance = calculate_distance(SCHOOL_LATITUDE, SCHOOL_LONGITUDE, latitude, longitude)
+        
+        # Ghi log để debug
+        print(f"Xác thực GPS - Tọa độ người dùng: {latitude}, {longitude}, Độ chính xác: {accuracy}m")
+        print(f"Khoảng cách từ trường: {distance:.2f} mét")
+        
+        # Kiểm tra nếu nằm trong bán kính cho phép
+        if distance <= MAX_DISTANCE_METERS:
+            return jsonify({
+                "verified": True,
+                "distance": round(distance, 2),
+                "message": f"Xác thực vị trí thành công. Bạn đang ở trong khuôn viên trường."
+            })
+        else:
+            return jsonify({
+                "verified": False,
+                "distance": round(distance, 2),
+                "message": f"Vị trí của bạn cách trường {round(distance)} mét. Bạn cần có mặt tại trường để điểm danh."
+            })
+    except Exception as e:
+        print(f"Lỗi xác thực vị trí: {e}")
+        return jsonify({
+            "verified": False,
+            "message": f"Lỗi xác thực vị trí: {str(e)}"
+        })
 
 @app.route('/')
 def home():
@@ -338,6 +407,10 @@ def logout_student():
 
 @app.before_request
 def before_request_func():
+    # Bỏ qua kiểm tra địa chỉ IP cho các endpoint cần thiết ( bỏ qua kiểm tra IP cho route xác thực vị trí và static files)
+    if request.endpoint == 'verify_location' or request.endpoint == 'static':
+        return
+        
     server_ip = get_local_ip()
     print(f"ALLOWED_IP: {ALLOWED_IP} | SERVER_IP: {server_ip}")
     if server_ip != ALLOWED_IP:
